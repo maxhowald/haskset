@@ -44,28 +44,28 @@ main = do
 playLoop (dealt, remaining)
     | endGame (dealt, remaining) = do return ()
     | dealMore dealt             = playLoop (dealt ++ (take 3 remaining), drop 3 remaining)
-    | otherwise                  = do 
+    | otherwise                  = do
+                                 putStrLn "Current Board" 
                                  print $ dealt
-                                 print $ length dealt
-                                 print $ length remaining
+                                 putStrLn $ "Cards on board: " ++ (show $ length dealt)
+                                 putStrLn $ "Cards on in deck: " ++ (show $ length remaining)
                                  --print $ sets dealt
                                  input <- sequence [getLine, getLine, getLine]
                                  let indices = map read input  --add input checking here
 
                                  if isSet $ zipWith (!!) (replicate 3 dealt) indices 
                                  then do
-                                  print "match" --keep score here
+                                  putStrLn "match" --keep score here
                                   playLoop (delete3 indices dealt, remaining) 
                                  else do
-                                  print "wrong" 
+                                  putStrLn "wrong" 
                                   playLoop (delete3 indices dealt, remaining) 
 
     where dealMore dealt = (not $ anySets dealt) || (length dealt < 12)
           endGame (dealt, remaining) = ((length $ remaining) == 0) && (not $ anySets dealt) 
 
+delete3 indices dealt = foldr delete' dealt indices
 
-delete3 [i1, i2, i3] dealt = delete' i1 $ delete' i2 $ delete' i3 dealt 
---foldr delete' dealt indices
 delete' :: Int -> [a] -> [a]
 delete' index list = let (front, back) = splitAt index list
                       in front ++ (tail back)

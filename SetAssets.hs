@@ -4,6 +4,7 @@ module SetAssets
 , isSet
 , anySets
 , delete3
+, groupsOf3
 ) where
 
 import Data.List
@@ -48,3 +49,7 @@ deleteIndex index list = let (front, back) = splitAt index list
 combinations :: Int -> [a] -> [[a]]
 combinations 0 _  = [ [] ]
 combinations n xs = [ y:ys | y:xs' <- tails xs, ys <- combinations (n-1) xs']
+
+groupsOf3 :: [a] -> [[a]]  
+groupsOf3 []  = []     
+groupsOf3 xs = take 3 xs : groupsOf3 (drop 3 xs)  

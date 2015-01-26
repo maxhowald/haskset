@@ -13,7 +13,7 @@ playLoop (dealt, remaining)
     | dealMore   = playLoop (dealt ++ (take 3 remaining), drop 3 remaining)
     | otherwise  = do
                  putStrLn "Current Board" 
-                 print $ dealt
+                 displayBoard
                  putStrLn $ "Cards on board: " ++ (show $ length dealt)
                  putStrLn $ "Cards on in deck: " ++ (show $ length remaining)
                  --print $ sets dealt
@@ -31,6 +31,5 @@ playLoop (dealt, remaining)
 
     where dealMore = (not $ anySets dealt) || (length dealt < 12)
           endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 
-
-
+          displayBoard = sequence $ map print $ groupsOf3 dealt
 

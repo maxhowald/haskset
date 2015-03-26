@@ -5,6 +5,7 @@ module SetAssets
 , anySets
 , delete3
 , groupsOf3
+, sets
 ) where
 
 import Data.List
@@ -40,7 +41,7 @@ anySets :: [Card] -> Bool
 anySets cards = (length $ sets cards) > 0
 
 delete3 :: [Int] -> [Card] -> [Card]
-delete3 indices dealt = foldr deleteIndex dealt indices
+delete3 indices dealt = foldr deleteIndex dealt (sort indices)
 
 deleteIndex :: Int -> [a] -> [a]
 deleteIndex index list = let (front, back) = splitAt index list

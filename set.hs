@@ -16,7 +16,7 @@ playLoop (dealt, remaining)
                  displayBoard
                  putStrLn $ "Cards on board: " ++ (show $ length dealt)
                  putStrLn $ "Cards on in deck: " ++ (show $ length remaining)
-                 --print $ sets dealt
+                 print $ sets dealt
                  input <- sequence [getLine, getLine, getLine]
                  let indices = map read input  --add input checking
                  let pickedSet = zipWith (!!) (replicate 3 dealt) indices 
@@ -27,7 +27,7 @@ playLoop (dealt, remaining)
                   playLoop (delete3 indices dealt, remaining) 
                  else do
                   putStrLn "wrong" 
-                  playLoop (delete3 indices dealt, remaining)
+                  playLoop (dealt, remaining)
 
     where dealMore = (not $ anySets dealt) || (length dealt < 12)
           endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 

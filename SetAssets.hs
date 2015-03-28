@@ -1,6 +1,6 @@
 module SetAssets
 ( Card
-, newDeck
+, getDeck
 , isSet
 , anySets
 , delete3
@@ -9,6 +9,8 @@ module SetAssets
 ) where
 
 import Data.List
+import Data.Random (shuffle, runRVar)
+import Data.Random.Source.Std
 
 data Color  = Red    | Green   | Purple     deriving (Eq, Ord, Show, Read, Bounded, Enum) 
 data Shape  = Circle | Diamond | Squiggle   deriving (Eq, Ord, Show, Read, Bounded, Enum) 
@@ -25,6 +27,11 @@ newDeck = [ Card number shade color shape | number <- [One .. Three]
                                            ,shade  <- [Empty .. Fill]
                                            ,color  <- [Red .. Purple]
                                            ,shape  <- [Circle .. Squiggle]]
+
+getDeck :: IO [Card]
+getDeck = do
+  deck <- runRVar (shuffle newDeck) StdRandom
+  return deck
 
 isSet :: [Card] -> Bool 
 isSet cards = (sameOrDiff numbers) && (sameOrDiff shades) && (sameOrDiff colors) && (sameOrDiff shapes)

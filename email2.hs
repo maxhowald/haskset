@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, TemplateHaskell, OverloadedStrings #-}
 {-# LANGUAGE GADTs, MultiParamTypeClasses, TypeSynonymInstances #-}
 
-import qualified Data.Text as T (Text, concat, pack)
+import qualified Data.Text as T (Text, concat, pack, unpack)
 import Data.ByteString (ByteString)
 import Database.Persist.Sqlite
 import Control.Monad.Logger (runStderrLoggingT)
@@ -28,7 +28,7 @@ import Control.Concurrent.STM.Lifted
 
 import SetAssets
 
-
+import qualified Text.Read as TR (read)
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 User
     username T.Text
@@ -174,13 +174,18 @@ main = runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
 getGameR :: Handler Html
 getGameR = do
     webSockets chatApp
-    defaultLayout $ do
-        [whamlet|
+    maid <- maybeAuthId
+    case maid of
+        Nothing -> redirect $ AuthR LoginR
+        Just u -> defaultLayout $ do
+                    [whamlet|
+            <p>You are logged in as #{u}
             <div #output>
+            <p>Enter a set as a comma separated list of indices (e.g. "[1,2,3]").
             <form #form>
                 <input #input autofocus>
-        |]
-        toWidget [lucius|
+                     |]
+                    toWidget [lucius|
             \#output {
                 width: 600px;
                 height: 400px;
@@ -196,8 +201,8 @@ getGameR = do
                 width: 600px;
                 display: block;
             }
-        |]
-        toWidget [julius|
+                               |]
+                    toWidget [julius|
             var url = document.URL,
                 output = document.getElementById("output"),
                 form = document.getElementById("form"),
@@ -218,26 +223,47 @@ getGameR = do
                 input.value = "";
                 e.preventDefault();
             });
-        |]
+                               |]
 
 
 chatApp :: WebSocketsT Handler ()
 chatApp = do
-    sendTextData ("Welcome to Set. Enter your name to begin." :: T.Text)
+    sendTextData ("Welcome to Set, please enter your name." :: T.Text)
     name <- receiveData
     sendTextData $ "Welcome, " <> name
     MyApp _ writeChan <- getYesod
 
     readChan <- atomically $ do
-        writeTChan writeChan $ name <> " has joined."
-        dupTChan writeChan     
+        writeTChan writeChan $ name <> " has joined the chat"
+        dupTChan writeChan
 
     deck <- liftIO getDeck
     let (dealt, remaining) = splitAt 12 $ deck
-    sendTextData(T.pack $ show dealt)
+    playLoop (dealt, remaining)
+            
 
-    race_
-        
-        (forever $ atomically (readTChan readChan) >>= sendTextData)
-        (sourceWS $$ mapM_C (\msg ->
-            atomically $ writeTChan writeChan $ name <> ": " <> msg))
+
+playLoop (dealt, remaining)
+    | endGame    = do return ()
+    | dealMore   = playLoop (dealt ++ (take 3 remaining), drop 3 remaining)
+    | otherwise  = do
+                 sendTextData (T.pack "Current Board")
+                 displayBoard
+                 sendTextData (T.pack "sets on the board")
+                 sendTextData (T.pack $ show $ sets dealt)
+                 
+                 input <- receiveData
+                 let indices = read (T.unpack input)  --add input checking
+                 let pickedSet = zipWith (!!) (replicate 3 dealt) indices 
+                 if isSet $ pickedSet 
+                 then do
+                   sendTextData ("Correct" :: T.Text)
+                   playLoop  (delete3 indices dealt, remaining)
+                 else do
+                   sendTextData ("Wrong" :: T.Text)
+                   playLoop  (dealt, remaining)
+
+    where dealMore = (not $ anySets dealt) || (length dealt < 12)
+          endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 
+          displayBoard = sendTextData (T.pack $ show dealt)
+

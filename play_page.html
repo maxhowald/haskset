@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<title>A+ SET Project</title>
+
+<head>
+<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+
+<script type="text/javascript" href="jquery-1.11.2">
+Image1 = new Image(150,100); //do one of these for each.
+Image1.src = "1.gif";
+
+/////////////////////////////////////
+$(document).ready(function(){
+	
+
+});
+
+////////////////////////////////////
+
+function dealCards(cardString){
+	var i = 1;
+	var j = 1;
+	var card;
+	while (cardString.length != 0){
+		var comma = cardString.indexOf(",");
+		var name = "slot" + i + j;
+		if (comma == -1){
+			card = cardString.slice(0);
+			document.getElementById(name).src = card + ".gif";
+			break;
+		}
+		else if(i == 4){
+			i = 1;
+			while (i<4){
+				card = cardString.slice(0, comma);
+				document.getElementById("extraCard" + i).style.display = "inline";
+				document.getElementById("extraCard" + i).src = card + ".gif";
+				cardString = cardString.substr(comma + 1);
+				i++;
+			}
+		}
+		
+		else{
+			card = cardString.slice(0, comma);
+			document.getElementById(name).src =  card + ".gif";
+			cardString = cardString.substr(comma + 1);
+		}
+		
+		if (j == 4){
+			j = 1;
+			i++;
+		}
+		else{
+			j++;
+		}
+	}
+}
+
+function insertPlayer(username, rating){
+	//if (username.length() > 10){}
+	var table = document.getElementById("scoreTable");
+	var row = table.insertRow(0);
+	nameCell = row.insertCell(0);
+	rateCell = row.insertCell(1);
+	scoreCell = row.insertCell(2);
+	nameCell.className = "username";
+	rateCell.className = "rating";
+	scoreCell.className = "score";
+	nameCell.innerHTML = username;
+	rateCell.innerHTML = "(" + rating + ")";
+	scoreCell.innerHTML = 0;
+}
+
+</script>
+</head>
+
+	<body>
+		<div id="wrapper">
+			<table id="main_table">
+				<tr>
+					<td rowspan="2" style="text-align: center;">
+						<table id="card_table" >
+							<tr>
+								<td>
+									<img id="slot11" class="card">
+								</td>
+								<td>
+									<img id="slot12" class="card">
+								</td>
+								<td>
+									<img id="slot13" class="card">
+								</td>
+								<td>
+									<img id="slot14" class="card">
+								</td>
+								<td>
+									<img id="extraCard1" style="display:none;" class="card" >
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<img id="slot21" class="card">
+								</td>
+								<td>
+									<img id="slot22" class="card">
+								</td>
+								<td>
+									<img id="slot23" class="card">
+								</td>
+								<td>
+									<img id="slot24" class="card">
+								</td>
+								<td>
+									<img id="extraCard2"  style="display:none;" class="card" >
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<img id="slot31" class="card">
+								</td>
+								<td>
+									<img id="slot32" class="card">
+								</td>
+								<td>
+									<img id="slot33" class="card">
+								</td>
+								<td>
+									<img id="slot34" onclick="dealCards('21,22,23,24,25,26,27,28,29,30,31,32,33,34,35')" class="card">
+								</td>
+								<td>
+									<img id="extraCard3"  style="display:none;" class="card" >
+								</td>
+							</tr>	
+							<tr>
+								<td colspan="5" style="height: auto;">
+									<button type="button" class="button" onclick="insertPlayer('joe', '77')"> Set! </button>
+								</td>
+							</tr>
+						</table>
+					</td>
+					<td id="scoreBox">
+						<table id="scoreTable">
+						</table>
+					</td>
+				</tr>
+
+				<tr>
+					<td id="chat">
+						Chat goes here.
+					</td>
+				</tr>
+			</table>
+		</div>
+</body>
+</html>

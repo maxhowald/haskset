@@ -1,0 +1,6 @@
+            <p>You are logged in as #{u}
+            <div #output>
+            <p>Enter a set as a comma separated list of indices (e.g. "[1,2,3]").
+            <form #form>
+                <input #input autofocus>
+

@@ -27,7 +27,8 @@ import Data.Monoid ((<>))
 import Control.Concurrent.STM.Lifted
 
 import SetAssets
-
+import Text.Julius
+import Text.Lucius
 import qualified Text.Read as TR (read)
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 User
@@ -178,53 +179,9 @@ getGameR = do
     case maid of
         Nothing -> redirect $ AuthR LoginR
         Just u -> defaultLayout $ do
-                    [whamlet|
-            <p>You are logged in as #{u}
-            <div #output>
-            <p>Enter a set as a comma separated list of indices (e.g. "[1,2,3]").
-            <form #form>
-                <input #input autofocus>
-                     |]
-                    toWidget [lucius|
-            \#output {
-                width: 600px;
-                height: 400px;
-                border: 1px solid black;
-                margin-bottom: 1em;
-                p {
-                    margin: 0 0 0.5em 0;
-                    padding: 0 0 0.5em 0;
-                    border-bottom: 1px dashed #99aa99;
-                }
-            }
-            \#input {
-                width: 600px;
-                display: block;
-            }
-                               |]
-                    toWidget [julius|
-            var url = document.URL,
-                output = document.getElementById("output"),
-                form = document.getElementById("form"),
-                input = document.getElementById("input"),
-                conn;
-
-            url = url.replace("http:", "ws:").replace("https:", "wss:");
-            conn = new WebSocket(url);
-
-            conn.onmessage = function(e) {
-                var p = document.createElement("p");
-                p.appendChild(document.createTextNode(e.data));
-                output.appendChild(p);
-            };
-
-            form.addEventListener("submit", function(e){
-                conn.send(input.value);
-                input.value = "";
-                e.preventDefault();
-            });
-                               |]
-
+                    $(whamletFile "gamepage.hamlet")
+                    toWidget $(luciusFile "gamepage.lucius")
+                    toWidget $(juliusFile "gamepage.julius")
 
 chatApp :: WebSocketsT Handler ()
 chatApp = do

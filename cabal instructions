@@ -1,0 +1,36 @@
+setting up haskell
+
+ok, the first thing you want to do is get the glasgow haskell compiler, ghc, and cabal, a package manager for haskell, from your distro's package manager.
+e.g ubuntu:
+sudo apt-get install ghc cabal
+
+cabal --version
+
+Now, this is fine, but a lot of times package managers have pretty old versions of cabal. But thats ok! we can get a new version of cabal with cabal itself. just do
+
+cabal install cabal-install
+
+this will install cabal in your $HOME/.cabal/bin directory.
+
+cabal --version
+
+no change! what?! 
+
+you have to set your path. to include the above directory.
+
+
+cabal --version
+$HOME/.cabal/bin/cabal --version
+
+STILL NO CHANGE???!?
+the version installed by your package manager takes precedence. But we can just remove that now:
+
+sudo apt-get remove cabal
+
+cabal --version
+
+yay!
+
+
+
+

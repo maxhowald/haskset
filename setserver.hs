@@ -204,23 +204,23 @@ playLoop (dealt, remaining)
     | endGame    = do return ()
     | dealMore   = playLoop (dealt ++ (take 3 remaining), drop 3 remaining)
     | otherwise  = do
-                 sendTextData (T.pack "Current Board")
+                 -- sendTextData (T.pack "Current Board")
                  displayBoard
-                 sendTextData (T.pack "sets on the board")
-                 sendTextData (T.pack $ show $ sets dealt)
+                -- sendTextData (T.pack "sets on the board")
+                -- sendTextData (T.pack $ show $ sets dealt)
                  
                  input <- receiveData
                  let indices = read (T.unpack input)  --add input checking
                  let pickedSet = zipWith (!!) (replicate 3 dealt) indices 
                  if isSet $ pickedSet 
                  then do
-                   sendTextData ("Correct" :: T.Text)
+                  -- sendTextData ("Correct" :: T.Text)
                    playLoop  (delete3 indices dealt, remaining)
                  else do
-                   sendTextData ("Wrong" :: T.Text)
+                   --sendTextData ("Wrong" :: T.Text)
                    playLoop  (dealt, remaining)
 
     where dealMore = (not $ anySets dealt) || (length dealt < 12)
           endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 
-          displayBoard = sendTextData (T.pack $ show dealt)
+          displayBoard = sendTextData (T.pack $ init $ tail $ show $ map cardnum dealt)
 

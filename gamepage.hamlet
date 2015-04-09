@@ -1,6 +1,54 @@
-            <p>You are logged in as #{u}
-            <div #output>
-            <p>Enter a set as a comma separated list of indices (e.g. "[1,2,3]").
-            <form #form>
-                <input #input autofocus>
+<p>You are logged in as #{u}
+<div id="wrapper">
+  <table id="main_table">
+    <tr>
+      <td rowspan="2" style="text-align: center;">
+        <table id="card_table" >
+          <tr>
+            <td>
+              <img id="slot11" class="card">
+            <td>
+              <img id="slot12" class="card">
+            <td>
+              <img id="slot13" class="card">
+            <td>
+              <img id="slot14" class="card">
+            <td>
+              <img id="extraCard1" style="display:none;" class="card">
+          <tr>
+            <td>
+              <img id="slot21" class="card">
+            <td>
+              <img id="slot22" class="card">
+            <td>
+              <img id="slot23" class="card">
+            <td>
+              <img id="slot24" class="card">
+            <td>
+              <img id="extraCard2" style="display:none;" class="card">
+          <tr>
+            <td>
+              <img id="slot31" class="card">
+            <td>
+              <img id="slot32" class="card">
+            <td>
+              <img id="slot33" class="card">
+            <td>
+              <img id="slot34" class="card">
+            <td>
+              <img id="extraCard3" style="display:none;" class="card">
+          <tr>
+            <td colspan="5" style="height: auto;">
+              <button type="button" class="button" onclick="insertPlayer('joe', '77')"> Set! 
+      <td id="scoreBox">
+        <table id="scoreTable">
+    <tr>
+      <td id="chat">
+        <p>Chat goes here.
+
+<div #output>
+<p>Enter a set as a comma separated list of indices (e.g. "[1,2,3]").
+<form #form>
+   <input #input autofocus>
+
 

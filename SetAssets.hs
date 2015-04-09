@@ -6,6 +6,7 @@ module SetAssets
 , delete3
 , groupsOf3
 , sets
+, cardnum
 ) where
 
 import Data.List
@@ -32,6 +33,9 @@ getDeck :: IO [Card]
 getDeck = do
   deck <- runRVar (shuffle newDeck) StdRandom
   return deck
+
+cardnum :: Card -> Int
+cardnum c = let Just x = findIndex (\dc -> dc==c) newDeck in x
 
 isSet :: [Card] -> Bool 
 isSet cards = (sameOrDiff numbers) && (sameOrDiff shades) && (sameOrDiff colors) && (sameOrDiff shapes)

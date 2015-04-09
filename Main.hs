@@ -22,11 +22,12 @@ import Control.Monad (forever)
 import Control.Monad.Trans.Reader
 import Control.Concurrent (threadDelay)
 import Data.Time
-import Conduit
+ -- import Conduit
 import Data.Monoid ((<>))
-import Control.Concurrent.STM.Lifted
+import Control.Concurrent.STM
 
 import SetAssets
+import System.Random
 import Text.Julius
 import Text.Lucius
 import qualified Text.Read as TR (read)
@@ -166,8 +167,8 @@ noResetR = do
 
 main :: IO ()
 main = runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
-    runSqlPool (runMigration migrateAll) pool
-    chan <- atomically newBroadcastTChan
+    liftIO $ runSqlPool (runMigration migrateAll) pool
+    chan <- liftIO $ atomically newBroadcastTChan
     liftIO $ warp 3000 $ MyApp pool chan
 
 
@@ -190,12 +191,12 @@ chatApp = do
     sendTextData $ "Welcome, " <> name
     MyApp _ writeChan <- getYesod
 
-    readChan <- atomically $ do
+    readChan <- liftIO $ atomically $ do
         writeTChan writeChan $ name <> " has joined the chat"
         dupTChan writeChan
 
-    deck <- liftIO getDeck
-    let (dealt, remaining) = splitAt 12 $ deck
+
+    let (dealt, remaining) = splitAt 12 $ getDeck (mkStdGen 100)
     playLoop (dealt, remaining)
             
 

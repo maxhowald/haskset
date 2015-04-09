@@ -12,14 +12,16 @@ Image1 = new Image(150,100); //do one of these for each.
 Image1.src = "1.gif";
 
 /////////////////////////////////////
-$(document).ready(function(){
-	
-
-});
-
+//$(document).ready(function(){});
+//onclick="dealCards('21,22,23,24,25,26,27,28,29,30,31,32,33,34,35')"
 ////////////////////////////////////
+var toSubmit = "";
+var isHighlighted = [];
+var isDealt = false;
+
 
 function dealCards(cardString){
+	isDealt = true;
 	var i = 1;
 	var j = 1;
 	var card;
@@ -29,6 +31,7 @@ function dealCards(cardString){
 		if (comma == -1){
 			card = cardString.slice(0);
 			document.getElementById(name).src = card + ".gif";
+			document.getElementById(name).tag = card;
 			break;
 		}
 		else if(i == 4){
@@ -37,6 +40,7 @@ function dealCards(cardString){
 				card = cardString.slice(0, comma);
 				document.getElementById("extraCard" + i).style.display = "inline";
 				document.getElementById("extraCard" + i).src = card + ".gif";
+				document.getElementById("extraCard" + i).tag = card;
 				cardString = cardString.substr(comma + 1);
 				i++;
 			}
@@ -45,6 +49,7 @@ function dealCards(cardString){
 		else{
 			card = cardString.slice(0, comma);
 			document.getElementById(name).src =  card + ".gif";
+			document.getElementById(name).tag = card;
 			cardString = cardString.substr(comma + 1);
 		}
 		
@@ -73,6 +78,38 @@ function insertPlayer(username, rating){
 	scoreCell.innerHTML = 0;
 }
 
+function submitCards(){
+	if (isHighlighted.length == 3){
+		var selected = isHighlighted.valueOf();
+		alert(selected);
+	}
+}
+
+function highlight(slot, card){
+	if(isDealt == true){
+		if (isHighlighted.length > 0){
+			for(index = 0; index < isHighlighted.length; index++){
+				if (isHighlighted[index] == card){
+					document.getElementById(slot).style.borderColor = null;
+					isHighlighted.splice(index, 1);
+					break;
+				}
+
+				else{
+					if (isHighlighted.length < 3){
+						document.getElementById(slot).style.borderColor = "red";
+						isHighlighted.push(card);
+						break;
+					}
+				}
+			}
+		}
+		else{
+			document.getElementById(slot).style.borderColor = "red";
+			isHighlighted.push(card);
+		}
+	}
+}
 </script>
 </head>
 
@@ -81,61 +118,61 @@ function insertPlayer(username, rating){
 			<table id="main_table">
 				<tr>
 					<td rowspan="2" style="text-align: center;">
-						<table id="card_table" >
+						<table id="card_table">
 							<tr>
 								<td>
-									<img id="slot11" class="card">
+									<img id="slot11" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="slot12" class="card">
+									<img id="slot12" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="slot13" class="card">
+									<img id="slot13" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="slot14" class="card">
+									<img id="slot14" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="extraCard1" style="display:none;" class="card" >
+									<img id="extraCard1" style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 							</tr>
 							<tr>
 								<td>
-									<img id="slot21" class="card">
+									<img id="slot21" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="slot22" class="card">
+									<img id="slot22" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="slot23" class="card">
+									<img id="slot23" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="slot24" class="card">
+									<img id="slot24" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="extraCard2"  style="display:none;" class="card" >
+									<img id="extraCard2"  style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 							</tr>
 							<tr>
 								<td>
-									<img id="slot31" class="card">
+									<img id="slot31" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="slot32" class="card">
+									<img id="slot32" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="slot33" class="card">
+									<img id="slot33" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="slot34" onclick="dealCards('21,22,23,24,25,26,27,28,29,30,31,32,33,34,35')" class="card">
+									<img id="slot34" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 								<td>
-									<img id="extraCard3"  style="display:none;" class="card" >
+									<img id="extraCard3"  style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 							</tr>	
 							<tr>
 								<td colspan="5" style="height: auto;">
-									<button type="button" class="button" onclick="insertPlayer('joe', '77')"> Set! </button>
+									<button type="button" class="button" onclick="submitCards()"> Set! </button>
 								</td>
 							</tr>
 						</table>
@@ -149,6 +186,7 @@ function insertPlayer(username, rating){
 				<tr>
 					<td id="chat">
 						Chat goes here.
+						<button type="button" class="button" onclick="dealCards('21,22,23,24,25,26,27,28,29,30,31,32,33,34,35')"> Deal Cards </button>
 					</td>
 				</tr>
 			</table>

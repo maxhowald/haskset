@@ -186,13 +186,13 @@ getGameR = do
 
 chatApp :: WebSocketsT Handler ()
 chatApp = do
-    sendTextData ("Welcome to Set, please enter your name." :: T.Text)
+    sendTextData ("CHATS: Welcome to Set, please enter your name." :: T.Text)
     name <- receiveData
-    sendTextData $ "Welcome, " <> name
+    sendTextData $ "CHATS: Welcome, " <> name
     MyApp _ writeChan <- getYesod
 
     readChan <- liftIO $ atomically $ do
-        writeTChan writeChan $ name <> " has joined the chat"
+        writeTChan writeChan $ "CHATS: " <> name <> " has joined the chat"
         dupTChan writeChan
 
     deck <- liftIO getDeck
@@ -205,23 +205,23 @@ playLoop (dealt, remaining)
     | endGame    = do return ()
     | dealMore   = playLoop (dealt ++ (take 3 remaining), drop 3 remaining)
     | otherwise  = do
-                 -- sendTextData (T.pack "Current Board")
+                 sendTextData (T.pack "DEBUG: Current Board")
                  displayBoard
-                -- sendTextData (T.pack "sets on the board")
-                -- sendTextData (T.pack $ show $ sets dealt)
-                 
+                 sendTextData (T.pack $ "DEBUG: " ++ (show dealt))
+                 sendTextData (T.pack "DEBUG: sets on the board")
+                 sendTextData (T.pack $ "DEBUG: " ++  (show $ sets dealt))
                  input <- receiveData
                  let indices = read (T.unpack input)  --add input checking
                  let pickedSet = zipWith (!!) (replicate 3 dealt) indices 
                  if isSet $ pickedSet 
                  then do
-                  -- sendTextData ("Correct" :: T.Text)
+                   sendTextData ("DEBUG: Correct" :: T.Text)
                    playLoop  (delete3 indices dealt, remaining)
                  else do
-                   --sendTextData ("Wrong" :: T.Text)
+                   sendTextData ("DEBUG: Wrong" :: T.Text)
                    playLoop  (dealt, remaining)
 
     where dealMore = (not $ anySets dealt) || (length dealt < 12)
           endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 
-          displayBoard = sendTextData (T.pack $ init $ tail $ show $ map cardnum dealt)
+          displayBoard = sendTextData (T.pack $ "CARDS" ++ (show $ map cardnum dealt))
 

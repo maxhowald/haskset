@@ -38,25 +38,37 @@ function dealCards(cardString){
 	}
 }
 
-            var url = document.URL,
-                output = document.getElementById("output"),
-                form = document.getElementById("form"),
-                input = document.getElementById("input"),
-                conn;
+var url = document.URL,
+output = document.getElementById("output"),
+form = document.getElementById("form"),
+input = document.getElementById("input"),
+conn;
 
-            url = url.replace("http:", "ws:").replace("https:", "wss:");
-            conn = new WebSocket(url);
+url = url.replace("http:", "ws:").replace("https:", "wss:");
+conn = new WebSocket(url);
 
-            conn.onmessage = function(e) {
-                var p = document.createElement("p");
-                p.appendChild(document.createTextNode(e.data));
-								dealCards(e.data);
-                output.appendChild(p);
-            };
+conn.onmessage = function(e) {
+		var	msg = e.data;
+		switch(msg.substring(0,5)) {
+		case "DEBUG":
+				var p = document.createElement("p");
+				p.appendChild(document.createTextNode(msg));
+        output.appendChild(p);
+				break;
+		case "CARDS":
+				dealCards(msg.substring(6, msg.length - 2)); //strip away the [].
+				break;
+    case "SCORE":
+				//not implemented
+				break;
+		case "CHATS":
+				//not implemented
+				break;						 			
+		}  			  
+};
 
-            form.addEventListener("submit", function(e){
-                conn.send(input.value);
-                input.value = "";
-                e.preventDefault();
-            });
-
+form.addEventListener("submit", function(e){
+    conn.send(input.value);
+    input.value = "";
+    e.preventDefault();
+});

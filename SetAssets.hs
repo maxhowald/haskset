@@ -12,10 +12,10 @@ module SetAssets
 import Data.List
 import Data.Random
 
-data Color  = Red    | Green   | Purple     deriving (Eq, Ord, Show, Read, Bounded, Enum) 
-data Shape  = Circle | Diamond | Squiggle   deriving (Eq, Ord, Show, Read, Bounded, Enum) 
-data Number = One    | Two     | Three      deriving (Eq, Ord, Show, Read, Bounded, Enum) 
-data Shade  = Empty  | Hatch   | Fill       deriving (Eq, Ord, Show, Read, Bounded, Enum) 
+data Color  = Red      | Purple  | Green      deriving (Eq, Ord, Show, Read, Bounded, Enum) 
+data Shape  = Squiggle | Diamond | Circle   deriving (Eq, Ord, Show, Read, Bounded, Enum) 
+data Number = One      | Two     | Three      deriving (Eq, Ord, Show, Read, Bounded, Enum) 
+data Shade  = Fill     | Hatch   | Empty       deriving (Eq, Ord, Show, Read, Bounded, Enum) 
 data Card   = Card Number Shade Color Shape deriving (Eq, Ord, Show, Read) 
 
 getNum   (Card num _     _     _     ) = num
@@ -23,10 +23,10 @@ getShade (Card _   shade _     _     ) = shade
 getColor (Card _   _     color _     ) = color
 getShape (Card _   _     _     shape ) = shape
 
-newDeck = [ Card number shade color shape | number <- [One .. Three]
-                                           ,shade  <- [Empty .. Fill]
-                                           ,color  <- [Red .. Purple]
-                                           ,shape  <- [Circle .. Squiggle]]
+newDeck = [ Card number shade color shape | shade  <- [Fill .. Empty]
+                                           ,shape  <- [Squiggle .. Circle]
+                                           ,color  <- [Red .. Green]
+                                           ,number <- [One .. Three]]
 
 getDeck :: IO [Card]
 getDeck = do

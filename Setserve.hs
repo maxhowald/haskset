@@ -27,7 +27,7 @@ import Data.Monoid ((<>))
 import Control.Concurrent.STM
 
 import SetAssets
-import System.Random
+
 import Text.Julius
 import Text.Lucius
 import qualified Text.Read as TR (read)
@@ -195,8 +195,8 @@ chatApp = do
         writeTChan writeChan $ name <> " has joined the chat"
         dupTChan writeChan
 
-
-    let (dealt, remaining) = splitAt 12 $ getDeck (mkStdGen 100)
+    deck <- liftIO getDeck
+    let (dealt, remaining) = splitAt 12 $ deck
     playLoop (dealt, remaining)
             
 

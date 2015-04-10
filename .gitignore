@@ -4,5 +4,7 @@
 *#
 *~
 *.aes
-*.db3
-setserver
+*.db3*
+Main
+.cabal-sandbox/
+dist/

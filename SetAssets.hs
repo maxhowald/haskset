@@ -10,8 +10,7 @@ module SetAssets
 ) where
 
 import Data.List
-import System.Random
-import System.Random.Shuffle
+import Data.Random
 
 data Color  = Red    | Green   | Purple     deriving (Eq, Ord, Show, Read, Bounded, Enum) 
 data Shape  = Circle | Diamond | Squiggle   deriving (Eq, Ord, Show, Read, Bounded, Enum) 
@@ -29,8 +28,10 @@ newDeck = [ Card number shade color shape | number <- [One .. Three]
                                            ,color  <- [Red .. Purple]
                                            ,shape  <- [Circle .. Squiggle]]
 
-getDeck :: RandomGen gen => gen -> [Card]
-getDeck gen = shuffle' newDeck 81 gen
+getDeck :: IO [Card]
+getDeck = do
+  deck <- runRVar (shuffle newDeck) StdRandom
+  return deck
 
 cardnum :: Card -> Int
 cardnum c = let Just x = findIndex (\dc -> dc==c) newDeck in x

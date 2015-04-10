@@ -100,7 +100,7 @@ getHomeR = do
     maid <- maybeAuthId
     case maid of
         Nothing -> redirect $ AuthR LoginR
-        Just u -> redirect $ LobbyR
+        Just _ -> redirect $ LobbyR
 
 
 
@@ -123,7 +123,7 @@ getNewAccountER = do
   lift $ defaultLayout $ do
                    myjswid 
                    newAccountWidget tm
-
+myjswid :: WidgetT MyApp IO ()
 myjswid = do
   addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"
   setTitle "SET | Register"                
@@ -200,7 +200,7 @@ chatApp = do
     playLoop (dealt, remaining)
             
 
-
+playLoop :: ([Card], [Card]) -> WebSocketsT Handler ()
 playLoop (dealt, remaining)
     | endGame    = do return ()
     | dealMore   = playLoop (dealt ++ (take 3 remaining), drop 3 remaining)

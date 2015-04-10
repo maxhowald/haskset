@@ -34,7 +34,7 @@ getDeck = do
   return deck
 
 cardnum :: Card -> Int
-cardnum c = let Just x = findIndex (\dc -> dc==c) newDeck in x
+cardnum c = let Just x = findIndex (\dc -> dc==c) newDeck in x+1
 
 isSet :: [Card] -> Bool 
 isSet cards = (sameOrDiff numbers) && (sameOrDiff shades) && (sameOrDiff colors) && (sameOrDiff shapes)

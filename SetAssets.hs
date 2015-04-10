@@ -18,11 +18,7 @@ data Number = One      | Two     | Three      deriving (Eq, Ord, Show, Read, Bou
 data Shade  = Fill     | Hatch   | Empty       deriving (Eq, Ord, Show, Read, Bounded, Enum) 
 data Card   = Card Number Shade Color Shape deriving (Eq, Ord, Show, Read) 
 
-getNum   (Card num _     _     _     ) = num
-getShade (Card _   shade _     _     ) = shade
-getColor (Card _   _     color _     ) = color
-getShape (Card _   _     _     shape ) = shape
-
+newDeck :: [Card]
 newDeck = [ Card number shade color shape | shade  <- [Fill .. Empty]
                                            ,shape  <- [Squiggle .. Circle]
                                            ,color  <- [Red .. Green]
@@ -38,11 +34,11 @@ cardnum c = let Just x = findIndex (\dc -> dc==c) newDeck in x+1
 
 isSet :: [Card] -> Bool 
 isSet cards = (sameOrDiff numbers) && (sameOrDiff shades) && (sameOrDiff colors) && (sameOrDiff shapes)
-		where numbers = map getNum cards
-		      shades  = map getShade cards 
-		      colors  = map getColor cards 
-		      shapes  = map getShape cards
-		      sameOrDiff lst = or [(length $ nub lst) == 1, (length $ nub lst) == (length lst) ]  
+    where numbers = map (\(Card num _     _     _     ) -> num)   cards
+          shades  = map (\(Card _   shade _     _     ) -> shade) cards 
+          colors  = map (\(Card _   _     color _     ) -> color) cards 
+          shapes  = map (\(Card _   _     _     shape ) -> shape) cards
+          sameOrDiff lst = or [(length $ nub lst) == 1, (length $ nub lst) == (length lst) ]  
 
 sets :: [Card] -> [[Card]]
 sets cards  = filter isSet $ combinations 3 cards

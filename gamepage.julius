@@ -2,7 +2,7 @@ function dealCards(cardString){
 	var i = 1;
 	var j = 1;
 	var card;
-  var prefix = "http://localhost:8000/";
+  var prefix = "http://nihil.ddns.net:8000/";
 	while (cardString.length != 0){
 		var comma = cardString.indexOf(",");
 		var name = "slot" + i + j;
@@ -51,18 +51,18 @@ conn.onmessage = function(e) {
 		var	msg = e.data;
 		switch(msg.substring(0,5)) {
 		case "DEBUG":
-				var p = document.createElement("p");
-				p.appendChild(document.createTextNode(msg));
-        output.appendChild(p);
+				console.log(msg);
 				break;
 		case "CARDS":
-				dealCards(msg.substring(6, msg.length - 2)); //strip away the [].
+				dealCards(msg.substring(6, msg.length - 1)); //strip away the [].
 				break;
     case "SCORE":
 				//not implemented
+				console.log(msg);
 				break;
 		case "CHATS":
 				//not implemented
+				console.log(msg);
 				break;						 			
 		}  			  
 };

@@ -7,6 +7,7 @@ module SetAssets
 , groupsOf3
 , sets
 , cardnum
+, debugDeal
 ) where
 
 import Data.List
@@ -23,6 +24,8 @@ newDeck = [ Card number shade color shape | shade  <- [Fill .. Empty]
                                            ,shape  <- [Squiggle .. Circle]
                                            ,color  <- [Red .. Green]
                                            ,number <- [One .. Three]]
+
+debugDeal = [Card Two Hatch Purple Circle,Card Three Empty Green Squiggle,Card One Hatch Purple Circle,Card Two Fill Green Squiggle,Card Three Fill Red Squiggle,Card Two Empty Green Circle,Card Three Empty Purple Diamond,Card Two Fill Purple Squiggle,Card Two Empty Green Diamond,Card Two Fill Green Circle,Card Two Hatch Purple Diamond,Card One Empty Purple Squiggle]
 
 getDeck :: IO [Card]
 getDeck = do

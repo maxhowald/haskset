@@ -123,6 +123,7 @@ getNewAccountER = do
   lift $ defaultLayout $ do
                    myjswid 
                    newAccountWidget tm
+
 myjswid :: WidgetT MyApp IO ()
 myjswid = do
   addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"
@@ -223,5 +224,7 @@ playLoop (dealt, remaining)
 
     where dealMore = (not $ anySets dealt) || (length dealt < 12)
           endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 
-          displayBoard = sendTextData (T.pack $ "CARDS" ++ (show $ map cardnum dealt))
-
+          displayBoard = do 
+            sendTextData (T.pack $ "CARDS" ++ (show $ map cardnum dealt))
+            sendTextData (T.pack $ "DEBUG" ++ (show $ map cardnum dealt))
+            

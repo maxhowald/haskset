@@ -1,0 +1,23 @@
+GAVIN:
+
+-make cards selectable/submittable: the user should click on a card to
+ select it. when the user presses the set button, the cards are submitted 
+(implement a javascript function which returns which cards are currently selected)
+
+  -bonus: maximum of three cards are selectable. when the user clicks
+   a fourth card, the first one they selected is automatically
+   unselected
+
+MAX:
+-implement multiple games (simple)
+-implement multiple players (a bit harder, requires learning how to use threads/concurrency in haskell)
+
+
+???/JOINT:
+
+
+-implement score: a javascript function which takes a SCORE string and
+updates the scoreboard. (mostly gavin?)
+
+-implement chat: a javascript function which takes a CHATS string and
+updates the chat, as well as a textbox to submit new chats (mostly max? have example code already...)

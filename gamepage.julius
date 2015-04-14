@@ -1,0 +1,74 @@
+function dealCards(cardString){
+	var i = 1;
+	var j = 1;
+	var card;
+  var prefix = "http://nihil.ddns.net:8000/";
+	while (cardString.length != 0){
+		var comma = cardString.indexOf(",");
+		var name = "slot" + i + j;
+		if (comma == -1){
+			card = cardString.slice(0);
+			document.getElementById(name).src = prefix +  card + ".gif";
+			break;
+		}
+		else if(i == 4){
+			i = 1;
+			while (i<4){
+				card = cardString.slice(0, comma);
+				document.getElementById("extraCard" + i).style.display = "inline";
+				document.getElementById("extraCard" + i).src = prefix + card + ".gif";
+				cardString = cardString.substr(comma + 1);
+				i++;
+			}
+		}
+		
+		else{
+			card = cardString.slice(0, comma);
+			document.getElementById(name).src =  prefix + card + ".gif";
+			cardString = cardString.substr(comma + 1);
+		}
+		
+		if (j == 4){
+			j = 1;
+			i++;
+		}
+		else{
+			j++;
+		}
+	}
+}
+
+var url = document.URL,
+output = document.getElementById("output"),
+form = document.getElementById("form"),
+input = document.getElementById("input"),
+conn;
+
+url = url.replace("http:", "ws:").replace("https:", "wss:");
+conn = new WebSocket(url);
+
+conn.onmessage = function(e) {
+		var	msg = e.data;
+		switch(msg.substring(0,5)) {
+		case "DEBUG":
+				console.log(msg);
+				break;
+		case "CARDS":
+				dealCards(msg.substring(6, msg.length - 1)); //strip away the [].
+				break;
+    case "SCORE":
+				//not implemented
+				console.log(msg);
+				break;
+		case "CHATS":
+				//not implemented
+				console.log(msg);
+				break;						 			
+		}  			  
+};
+
+form.addEventListener("submit", function(e){
+    conn.send(input.value);
+    input.value = "";
+    e.preventDefault();
+});

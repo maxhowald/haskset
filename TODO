@@ -1,0 +1,32 @@
+GAVIN:
+
+-make cards selectable/submittable: the user should click on a card to
+ select it. when the user presses the set button, the cards are
+ submitted to the server.  
+
+ (concretely, implement the javascript function setbutton.onclick()
+ which figures out which cards are currently selected and then simply
+ calls websocket_conn.send(<cardnums>) )
+
+  -bonus: would be nice if a maximum of three cards are
+   selectable. when the user clicks a fourth card, the first one they
+   selected is automatically unselected
+
+MAX:
+
+-implement multiple games (simple) 
+
+-implement multiple players (a bit harder, requires using
+ threads/channels/concurrency in haskell, but I have lots of example
+ code...)
+
+
+???/JOINT: (lower priority)
+
+-implement score: a javascript function which takes a SCORE string and
+updates the scoreboard. (mostly gavin? score/rating still have to be
+tracked on the backend)
+
+-implement chat: a javascript function which takes a CHATS string and
+updates the chat, as well as a textbox to submit new chats (mostly
+max? have example code already...mostly handled by server...)

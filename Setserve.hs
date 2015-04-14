@@ -22,12 +22,14 @@ import Control.Monad (forever)
 import Control.Monad.Trans.Reader
 import Control.Concurrent (threadDelay)
 import Data.Time
-import Conduit
+ -- import Conduit
 import Data.Monoid ((<>))
-import Control.Concurrent.STM.Lifted
+import Control.Concurrent.STM
 
 import SetAssets
 
+import Text.Julius
+import Text.Lucius
 import qualified Text.Read as TR (read)
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 User
@@ -98,7 +100,7 @@ getHomeR = do
     maid <- maybeAuthId
     case maid of
         Nothing -> redirect $ AuthR LoginR
-        Just u -> redirect $ LobbyR
+        Just _ -> redirect $ LobbyR
 
 
 
@@ -122,6 +124,7 @@ getNewAccountER = do
                    myjswid 
                    newAccountWidget tm
 
+myjswid :: WidgetT MyApp IO ()
 myjswid = do
   addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"
   setTitle "SET | Register"                
@@ -165,8 +168,8 @@ noResetR = do
 
 main :: IO ()
 main = runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
-    runSqlPool (runMigration migrateAll) pool
-    chan <- atomically newBroadcastTChan
+    liftIO $ runSqlPool (runMigration migrateAll) pool
+    chan <- liftIO $ atomically newBroadcastTChan
     liftIO $ warp 3000 $ MyApp pool chan
 
 
@@ -178,63 +181,19 @@ getGameR = do
     case maid of
         Nothing -> redirect $ AuthR LoginR
         Just u -> defaultLayout $ do
-                    [whamlet|
-            <p>You are logged in as #{u}
-            <div #output>
-            <p>Enter a set as a comma separated list of indices (e.g. "[1,2,3]").
-            <form #form>
-                <input #input autofocus>
-                     |]
-                    toWidget [lucius|
-            \#output {
-                width: 600px;
-                height: 400px;
-                border: 1px solid black;
-                margin-bottom: 1em;
-                p {
-                    margin: 0 0 0.5em 0;
-                    padding: 0 0 0.5em 0;
-                    border-bottom: 1px dashed #99aa99;
-                }
-            }
-            \#input {
-                width: 600px;
-                display: block;
-            }
-                               |]
-                    toWidget [julius|
-            var url = document.URL,
-                output = document.getElementById("output"),
-                form = document.getElementById("form"),
-                input = document.getElementById("input"),
-                conn;
-
-            url = url.replace("http:", "ws:").replace("https:", "wss:");
-            conn = new WebSocket(url);
-
-            conn.onmessage = function(e) {
-                var p = document.createElement("p");
-                p.appendChild(document.createTextNode(e.data));
-                output.appendChild(p);
-            };
-
-            form.addEventListener("submit", function(e){
-                conn.send(input.value);
-                input.value = "";
-                e.preventDefault();
-            });
-                               |]
-
+                    $(whamletFile "gamepage.hamlet")
+                    toWidget $(luciusFile "gamepage.lucius")
+                    toWidget $(juliusFile "gamepage.julius")
 
 chatApp :: WebSocketsT Handler ()
 chatApp = do
-    sendTextData ("Welcome to Set, please enter your name." :: T.Text)
+    sendTextData ("CHATS: Welcome to Set, please enter your name." :: T.Text)
     name <- receiveData
-    sendTextData $ "Welcome, " <> name
+    sendTextData $ "CHATS: Welcome, " <> name
     MyApp _ writeChan <- getYesod
 
-    readChan <- atomically $ do
-        writeTChan writeChan $ name <> " has joined the chat"
+    readChan <- liftIO $ atomically $ do
+        writeTChan writeChan $ "CHATS: " <> name <> " has joined the chat"
         dupTChan writeChan
 
     deck <- liftIO getDeck
@@ -242,28 +201,30 @@ chatApp = do
     playLoop (dealt, remaining)
             
 
-
+playLoop :: ([Card], [Card]) -> WebSocketsT Handler ()
 playLoop (dealt, remaining)
     | endGame    = do return ()
     | dealMore   = playLoop (dealt ++ (take 3 remaining), drop 3 remaining)
     | otherwise  = do
-                 sendTextData (T.pack "Current Board")
+                 sendTextData (T.pack "DEBUG: Current Board")
                  displayBoard
-                 sendTextData (T.pack "sets on the board")
-                 sendTextData (T.pack $ show $ sets dealt)
-                 
+                 sendTextData (T.pack $ "DEBUG: " ++ (show dealt))
+                 sendTextData (T.pack "DEBUG: sets on the board")
+                 sendTextData (T.pack $ "DEBUG: " ++  (show $ sets dealt))
                  input <- receiveData
                  let indices = read (T.unpack input)  --add input checking
                  let pickedSet = zipWith (!!) (replicate 3 dealt) indices 
                  if isSet $ pickedSet 
                  then do
-                   sendTextData ("Correct" :: T.Text)
+                   sendTextData ("DEBUG: Correct" :: T.Text)
                    playLoop  (delete3 indices dealt, remaining)
                  else do
-                   sendTextData ("Wrong" :: T.Text)
+                   sendTextData ("DEBUG: Wrong" :: T.Text)
                    playLoop  (dealt, remaining)
 
     where dealMore = (not $ anySets dealt) || (length dealt < 12)
           endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 
-          displayBoard = sendTextData (T.pack $ show dealt)
-
+          displayBoard = do 
+            sendTextData (T.pack $ "CARDS" ++ (show $ map cardnum dealt))
+            sendTextData (T.pack $ "DEBUG" ++ (show $ map cardnum dealt))
+            

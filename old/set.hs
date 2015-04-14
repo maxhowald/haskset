@@ -1,11 +1,9 @@
 import Data.List
-import Data.Random 
-import Data.Random.Source.Std
+import System.Random
 import SetAssets
 
 main = do
-    deck <- runRVar (shuffle newDeck) StdRandom
-    let (dealt, remaining) = splitAt 12 deck
+    let (dealt, remaining) = splitAt 12  $ getDeck (mkStdGen 81)
     playLoop (dealt, remaining)
 
 playLoop (dealt, remaining)

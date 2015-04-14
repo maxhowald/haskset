@@ -1,7 +1,7 @@
 
 
-setserver: setserver.hs set.hs SetAssets.hs
-	ghc setserver.hs
+setserver: Setserve.hs set.hs SetAssets.hs
+	ghc Setserve.hs
 
 clean: 
-	rm -f *.db3 *# *~ *.o *.hi *.dyn* *.aes setserver
+	rm -f *.db3* *# *~ *.o *.hi *.dyn* *.aes Setserve

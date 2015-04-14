@@ -53,6 +53,17 @@ cursor: pointer;
 	top:1px;
 }
 
+.selectedCard{
+width: 148px;
+height: 98px;
+border: 2px solid red;
+}
+
+.selectedCard:active{
+	position:relative;
+	top:1px;
+}
+
 .button {
 	-moz-box-shadow:inset 0px 1px 0px 0px #a6827e;
 	-webkit-box-shadow:inset 0px 1px 0px 0px #a6827e;

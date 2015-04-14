@@ -1,0 +1,66 @@
+<html>
+	<head>
+		<title>Login</title>
+	</head>
+	<body>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<div class="loginDiv" align="center">
+			<form method="post" enctype="application/x-www-form-urlencoded" action="/auth/page/account/login">
+				<table>
+					<tr>
+						<td>
+							<div class="required ">
+								<label for="username">
+									Username
+								</label>
+							</div>
+						</td>
+						<td>
+							<div>
+								<input id="username" name="f1" type="text" required value="">
+							</div>
+						<td>
+					</tr>
+					<tr>
+						<td>
+							<div class="required ">
+								<label for="password">
+									Password
+								</label>
+							</div>
+						</td>
+						<td>
+							<div>
+								<input id="password" name="f2" type="password" required="" value="">
+							</div>
+						</td>
+					</tr>
+				</table>
+				<br>
+				<div>
+					<input type="submit" value="Login">
+				</div>
+				</form>
+			<p>
+				<a href="/auth/page/account/newaccount">
+					Register a new account
+				</a>
+			</p>
+			<p>
+				<a href="/auth/page/account/resetpassword">
+					Forgot password?
+				</a>
+			</p>
+		</div>
+	</body>
+</html>

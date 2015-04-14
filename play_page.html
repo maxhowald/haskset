@@ -19,7 +19,6 @@ var toSubmit = "";
 var isHighlighted = [];
 var isDealt = false;
 
-
 function dealCards(cardString){
 	isDealt = true;
 	var i = 1;
@@ -79,10 +78,8 @@ function insertPlayer(username, rating){
 }
 
 function submitCards(){
-	if (isHighlighted.length == 3){
-		var selected = isHighlighted.valueOf();
-		alert(selected);
-	}
+	var selected = isHighlighted.valueOf();
+	alert(selected);
 }
 
 function highlight(slot, card){
@@ -90,14 +87,14 @@ function highlight(slot, card){
 		if (isHighlighted.length > 0){
 			for(index = 0; index < isHighlighted.length; index++){
 				if (isHighlighted[index] == card){
-					document.getElementById(slot).style.borderColor = null;
+					document.getElementById(slot).className = "card";
 					isHighlighted.splice(index, 1);
 					break;
 				}
-
+ 
 				else{
 					if (isHighlighted.length < 3){
-						document.getElementById(slot).style.borderColor = "red";
+						document.getElementById(slot).className = "selectedCard";
 						isHighlighted.push(card);
 						break;
 					}
@@ -105,11 +102,20 @@ function highlight(slot, card){
 			}
 		}
 		else{
-			document.getElementById(slot).style.borderColor = "red";
+			document.getElementById(slot).className = "selectedCard";
 			isHighlighted.push(card);
+		}
+		
+		if (isHighlighted.length == 3){
+			document.getElementById("submit").disabled = false;
+		}
+		else{
+			document.getElementById("submit").disabled = true;
 		}
 	}
 }
+
+//still need to make function that rearranges scoreboard when message recieved.
 </script>
 </head>
 
@@ -172,7 +178,7 @@ function highlight(slot, card){
 							</tr>	
 							<tr>
 								<td colspan="5" style="height: auto;">
-									<button type="button" class="button" onclick="submitCards()"> Set! </button>
+									<button id="submit" type="button" disabled class="button" onclick="submitCards()"> Set! </button>
 								</td>
 							</tr>
 						</table>

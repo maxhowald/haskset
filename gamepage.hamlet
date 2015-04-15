@@ -39,7 +39,7 @@
               <img id="extraCard3" style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
           <tr>
             <td colspan="5" style="height: auto;">
-              <button id="submit" type="button" disabled class="button" onclick="submitCards()">
+              <button id="submit" type="button" disabled class="button" onclick="submitCards()">Set!
 
       <td id="scoreBox">
         <table id="scoreTable">

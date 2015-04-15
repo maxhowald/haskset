@@ -1,4 +1,10 @@
 function dealCards(cardString){
+
+	for (ind = 1; ind < 4; ind++) {
+		document.getElementById("extraCard" + ind).style.display = "none";
+		document.getElementById("extraCard" + ind).className = "card";
+	}
+	isHighlighted = [];
 	var i = 1;
 	var j = 1;
 	var card;
@@ -10,6 +16,7 @@ function dealCards(cardString){
 			card = cardString.slice(0);
 			document.getElementById(name).src = prefix +  card + ".gif";
       document.getElementById(name).tag = card;
+			document.getElementById(name).className = "card"
 			break;
 		}
 		else if(i == 4){
@@ -19,6 +26,7 @@ function dealCards(cardString){
 				document.getElementById("extraCard" + i).style.display = "inline";
 				document.getElementById("extraCard" + i).src = prefix + card + ".gif";
 				document.getElementById("extraCard" + i).tag = card;
+				document.getElementById("extraCard" + i).className = "card"
 				cardString = cardString.substr(comma + 1);
 				i++;
 			}
@@ -28,6 +36,7 @@ function dealCards(cardString){
 			card = cardString.slice(0, comma);
 			document.getElementById(name).src =  prefix + card + ".gif";		
 			document.getElementById(name).tag = card;
+			document.getElementById(name).className = "card"
 			cardString = cardString.substr(comma + 1);
 		}
 		

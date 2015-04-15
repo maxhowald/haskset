@@ -46,9 +46,7 @@
     <tr>
       <td id="chat">
         <p>Chat goes here.
+        <button type="button" id="deal" class="button" onclick="startGame()"> Deal Cards 
 
-<p>Enter a set as a comma separated list of indices (e.g. "[1,2,3]").
-<form #form>
-   <input #input autofocus>
 
 

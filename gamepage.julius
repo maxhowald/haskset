@@ -79,25 +79,17 @@ conn.onmessage = function(e) {
 		}  			  
 };
 
-form.addEventListener("submit", function(e){
-    conn.send(input.value);
-    input.value = "";
-    e.preventDefault();
-});
-
 
 
 var isHighlighted = [];
 
 function submitCards(){
 	var selected = isHighlighted.valueOf();
-	alert(selected);
 	conn.send("[" + selected + "]");	
 }
 
 function highlight(slot, card){
-console.log("slot: " + slot);
-console.log("card: " + card);
+
     var done = false;
 		if (isHighlighted.length > 0){
 				for(index = 0; index < isHighlighted.length; index++){
@@ -113,13 +105,9 @@ console.log("card: " + card);
 		if (done == false) {
 				if (isHighlighted.length < 3){
 						document.getElementById(slot).className = "selectedCard";
-						console.log("changed card attr. pushing card..." + card);
 						isHighlighted.push(card);
-						console.log("isHighlighted: " + isHighlighted);
-						
 				}
 		}
-
 		
 		if (isHighlighted.length == 3){
 				document.getElementById("submit").disabled = false;
@@ -127,4 +115,9 @@ console.log("card: " + card);
 		else {
 				document.getElementById("submit").disabled = true;
 		}
+}
+
+function startGame() {
+		conn.send("BEGIN");
+		document.getElementById("deal").disabled = true;
 }

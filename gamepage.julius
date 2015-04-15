@@ -9,6 +9,7 @@ function dealCards(cardString){
 		if (comma == -1){
 			card = cardString.slice(0);
 			document.getElementById(name).src = prefix +  card + ".gif";
+      document.getElementById(name).tag = card;
 			break;
 		}
 		else if(i == 4){
@@ -17,6 +18,7 @@ function dealCards(cardString){
 				card = cardString.slice(0, comma);
 				document.getElementById("extraCard" + i).style.display = "inline";
 				document.getElementById("extraCard" + i).src = prefix + card + ".gif";
+				document.getElementById("extraCard" + i).tag = card;
 				cardString = cardString.substr(comma + 1);
 				i++;
 			}
@@ -24,7 +26,8 @@ function dealCards(cardString){
 		
 		else{
 			card = cardString.slice(0, comma);
-			document.getElementById(name).src =  prefix + card + ".gif";
+			document.getElementById(name).src =  prefix + card + ".gif";		
+			document.getElementById(name).tag = card;
 			cardString = cardString.substr(comma + 1);
 		}
 		
@@ -72,3 +75,47 @@ form.addEventListener("submit", function(e){
     input.value = "";
     e.preventDefault();
 });
+
+
+
+var isHighlighted = [];
+
+function submitCards(){
+	var selected = isHighlighted.valueOf();
+	alert(selected);
+	conn.send("[" + selected + "]");	
+}
+
+function highlight(slot, card){
+console.log("slot: " + slot);
+console.log("card: " + card);
+    var done = false;
+		if (isHighlighted.length > 0){
+				for(index = 0; index < isHighlighted.length; index++){
+						if (isHighlighted[index] == card){
+								var done = true;									 
+								document.getElementById(slot).className = "card";
+								isHighlighted.splice(index, 1);
+						}
+				}
+
+		}
+
+		if (done == false) {
+				if (isHighlighted.length < 3){
+						document.getElementById(slot).className = "selectedCard";
+						console.log("changed card attr. pushing card..." + card);
+						isHighlighted.push(card);
+						console.log("isHighlighted: " + isHighlighted);
+						
+				}
+		}
+
+		
+		if (isHighlighted.length == 3){
+				document.getElementById("submit").disabled = false;
+		}
+		else {
+				document.getElementById("submit").disabled = true;
+		}
+}

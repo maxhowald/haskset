@@ -6,40 +6,41 @@
         <table id="card_table" >
           <tr>
             <td>
-              <img id="slot11" class="card">
+              <img id="slot11" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="slot12" class="card">
+              <img id="slot12" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="slot13" class="card">
+              <img id="slot13" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="slot14" class="card">
+              <img id="slot14" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="extraCard1" style="display:none;" class="card">
+              <img id="extraCard1" style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
           <tr>
             <td>
-              <img id="slot21" class="card">
+              <img id="slot21" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="slot22" class="card">
+              <img id="slot22" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="slot23" class="card">
+              <img id="slot23" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="slot24" class="card">
+              <img id="slot24" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="extraCard2" style="display:none;" class="card">
+              <img id="extraCard2" style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
           <tr>
             <td>
-              <img id="slot31" class="card">
+              <img id="slot31" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="slot32" class="card">
+              <img id="slot32" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="slot33" class="card">
+              <img id="slot33" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="slot34" class="card">
+              <img id="slot34" class="card" onclick="highlight(this.id, this.tag)">
             <td>
-              <img id="extraCard3" style="display:none;" class="card">
+              <img id="extraCard3" style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
           <tr>
             <td colspan="5" style="height: auto;">
-              <button type="button" class="button" onclick="insertPlayer('joe', '77')"> Set! 
+              <button id="submit" type="button" disabled class="button" onclick="submitCards()">
+
       <td id="scoreBox">
         <table id="scoreTable">
     <tr>

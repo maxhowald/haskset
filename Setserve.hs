@@ -31,6 +31,7 @@ import SetAssets
 import Text.Julius
 import Text.Lucius
 import qualified Text.Read as TR (read)
+import qualified Data.List as L (delete)
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 User
     username T.Text
@@ -213,11 +214,11 @@ playLoop (dealt, remaining)
                  sendTextData (T.pack $ "DEBUG: " ++  (show $ sets dealt))
                  input <- receiveData
                  let indices = read (T.unpack input)  --add input checking
-                 let pickedSet = zipWith (!!) (replicate 3 dealt) indices 
+                 let pickedSet = map (\i -> newDeck !! (i-1)) indices
                  if isSet $ pickedSet 
                  then do
                    sendTextData ("DEBUG: Correct" :: T.Text)
-                   playLoop  (delete3 indices dealt, remaining)
+                   playLoop  (foldr L.delete dealt pickedSet, remaining)
                  else do
                    sendTextData ("DEBUG: Wrong" :: T.Text)
                    playLoop  (dealt, remaining)

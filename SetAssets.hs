@@ -1,6 +1,7 @@
 module SetAssets
 ( Card
 , getDeck
+, newDeck
 , isSet
 , anySets
 , delete3

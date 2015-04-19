@@ -35,7 +35,7 @@ import qualified Data.List as L (delete)
 
 
 import Conduit
-
+import Control.Concurrent.MVar
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 User
@@ -60,7 +60,14 @@ instance PersistUserCredentials User where
 
     userCreate name email key pwd = User name pwd "" True key ""
 
-data MyApp = MyApp ConnectionPool (TChan T.Text)
+
+data Game = Game {
+      players :: [String],
+      channel :: TChan T.Text,
+      deck :: IO Cards
+}
+
+data MyApp = MyApp ConnectionPool (TChan T.Text) (MVar [IO Game] ) (MVar Int)
 
 mkYesod "MyApp" [parseRoutes|
 / HomeR GET
@@ -77,7 +84,7 @@ instance RenderMessage MyApp FormMessage where
 instance YesodPersist MyApp where
     type YesodPersistBackend MyApp = SqlBackend
     runDB action = do
-        MyApp pool _ <- getYesod
+        MyApp pool _ _ _ <- getYesod
         runSqlPool action pool
 
 instance YesodAuth MyApp where
@@ -172,11 +179,31 @@ noResetR = do
    <a href="@{tm newAccountR}">_{Msg.RegisterLong}
 |]
 
+
+
+
+
+createGame :: IO Game
+createGame = do
+  newchan <- liftIO $ atomically newBroadcastTChan
+  return Game {
+               players = [],
+               channel = newchan,
+               deck = getDeck
+             }
+  
+
+gameStream :: [IO Game]
+gameStream = repeat createGame
+
 main :: IO ()
-main = runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
+main = do
+  games <- newMVar gameStream
+  nextGameId <- newMVar 1
+  runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
     liftIO $ runSqlPool (runMigration migrateAll) pool
     chan <- liftIO $ atomically newBroadcastTChan
-    liftIO $ warp 3000 $ MyApp pool chan
+    liftIO $ warp 3000 $ MyApp pool chan games nextGameId
 
 
 
@@ -197,50 +224,50 @@ chatApp deck u  = do
     sendTextData ("CHATS: Welcome to Set, press deal to begin the game." :: T.Text)
 --    name <- receiveData
 --    sendTextData $ "CHATS: Welcome, " <> name
-    MyApp _ writeChan <- getYesod
+    MyApp _ writeChan _ _ <- getYesod
 
     readChan <- liftIO $ atomically $ do
         writeTChan writeChan $ "CHATS: " <> u <> " has joined the chat"
         dupTChan writeChan
 
     let (dealt, remaining) = splitAt 12 $ deck
-
+    let wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
     race_
           (forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData )
           (sourceWS $$ mapM_C (\msg ->
-            if (msg :: T.Text) == "BEGIN" 
-            then do (liftIO $ atomically $ writeTChan writeChan $ T.pack $ "CARDS" ++ (show $ map cardnum dealt) )
-            else  do liftIO $ atomically $ writeTChan writeChan "error"))
+            case msg of 
+              "BEGIN"  -> wrCh msg
+              "READY"  -> playLoop (dealt, remaining) writeChan
+              _          -> wrCh "error"))
 
-
-    sendTextData $ (T.pack $ show dealt)
-    playLoop (dealt, remaining)
+    
         
 
-playLoop :: ([Card], [Card]) -> WebSocketsT Handler ()
-playLoop (dealt, remaining)
+playLoop :: ([Card], [Card]) -> (TChan T.Text) ->  WebSocketsT Handler ()
+playLoop (dealt, remaining) writeChan
     | endGame    = do return ()
-    | dealMore   = playLoop (dealt ++ (take 3 remaining), drop 3 remaining)
+    | dealMore   = playLoop (dealt ++ (take 3 remaining), drop 3 remaining) writeChan
     | otherwise  = do
-                 sendTextData (T.pack "DEBUG: Current Board")
+                 wrCh $ (T.pack "DEBUG: Current Board")
                  displayBoard
-                 sendTextData (T.pack $ "DEBUG: " ++ (show dealt))
-                 sendTextData (T.pack "DEBUG: sets on the board")
-                 sendTextData (T.pack $ "DEBUG: " ++  (show $ sets dealt))
-                 input <- receiveData
-                 let indices = read (T.unpack input)  --add input checking
-                 let pickedSet = map (\i -> newDeck !! (i-1)) indices
-                 if isSet $ pickedSet 
-                 then do
-                   sendTextData ("DEBUG: Correct" :: T.Text)
-                   playLoop  (foldr L.delete dealt pickedSet, remaining)
-                 else do
-                   sendTextData ("DEBUG: Wrong" :: T.Text)
-                   playLoop  (dealt, remaining)
+                 wrCh (T.pack $ "DEBUG: " ++ (show dealt))
+                 wrCh (T.pack "DEBUG: sets on the board")
+                 wrCh (T.pack $ "DEBUG: " ++  (show $ sets dealt))
+                 sourceWS $$ mapM_C (\input -> do 
+                                     let indices = read (T.unpack input)  --add input checking
+                                     let pickedSet = map (\i -> newDeck !! (i-1)) indices
+                                     if isSet $ pickedSet 
+                                     then do
+                                       wrCh ("DEBUG: Correct" :: T.Text)
+                                       playLoop  (foldr L.delete dealt pickedSet, remaining) writeChan
+                                     else do
+                                       wrCh ("DEBUG: Wrong" :: T.Text)
+                                       playLoop  (dealt, remaining) writeChan)
 
     where dealMore = (not $ anySets dealt) || (length dealt < 12)
           endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 
           displayBoard = do 
-            sendTextData (T.pack $ "CARDS" ++ (show $ map cardnum dealt))
-            sendTextData (T.pack $ "DEBUG" ++ (show $ map cardnum dealt))
-            
+            wrCh $ (T.pack $ "CARDS" ++ (show $ map cardnum dealt))
+            wrCh $ (T.pack $ "DEBUG" ++ (show $ map cardnum dealt))
+          wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
+        

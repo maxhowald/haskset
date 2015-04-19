@@ -75,11 +75,15 @@ conn.onmessage = function(e) {
 		case "CHATS":
 				//not implemented
 				console.log(msg);
-				break;						 			
+				break;
+		case "BEGIN":
+				console.log(msg);
+				conn.send("READY");
+				break;
 		}  			  
 };
 
-
+ 
 
 var isHighlighted = [];
 

@@ -32,6 +32,11 @@ import Text.Julius
 import Text.Lucius
 import qualified Text.Read as TR (read)
 import qualified Data.List as L (delete)
+
+
+import Conduit
+
+
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 User
     username T.Text
@@ -177,30 +182,40 @@ main = runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
 
 getGameR :: Handler Html
 getGameR = do
-    webSockets chatApp
     maid <- maybeAuthId
     case maid of
         Nothing -> redirect $ AuthR LoginR
-        Just u -> defaultLayout $ do
+        Just u -> do 
+                webSockets (chatApp newDeck u)
+                defaultLayout $ do
                     $(whamletFile "gamepage.hamlet")
                     toWidget $(luciusFile "gamepage.lucius")
                     toWidget $(juliusFile "gamepage.julius")
 
-chatApp :: WebSocketsT Handler ()
-chatApp = do
-    sendTextData ("CHATS: Welcome to Set, please enter your name." :: T.Text)
-    name <- receiveData
-    sendTextData $ "CHATS: Welcome, " <> name
+chatApp :: [Card] -> T.Text -> WebSocketsT Handler ()
+chatApp deck u  = do
+    sendTextData ("CHATS: Welcome to Set, press deal to begin the game." :: T.Text)
+--    name <- receiveData
+--    sendTextData $ "CHATS: Welcome, " <> name
     MyApp _ writeChan <- getYesod
 
     readChan <- liftIO $ atomically $ do
-        writeTChan writeChan $ "CHATS: " <> name <> " has joined the chat"
+        writeTChan writeChan $ "CHATS: " <> u <> " has joined the chat"
         dupTChan writeChan
 
-    deck <- liftIO getDeck
     let (dealt, remaining) = splitAt 12 $ deck
+
+    race_
+          (forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData )
+          (sourceWS $$ mapM_C (\msg ->
+            if (msg :: T.Text) == "BEGIN" 
+            then do (liftIO $ atomically $ writeTChan writeChan $ T.pack $ "CARDS" ++ (show $ map cardnum dealt) )
+            else  do liftIO $ atomically $ writeTChan writeChan "error"))
+
+
+    sendTextData $ (T.pack $ show dealt)
     playLoop (dealt, remaining)
-            
+        
 
 playLoop :: ([Card], [Card]) -> WebSocketsT Handler ()
 playLoop (dealt, remaining)

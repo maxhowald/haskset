@@ -1,7 +1,7 @@
 {-# LANGUAGE QuasiQuotes, TypeFamilies, GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, TemplateHaskell, OverloadedStrings #-}
 {-# LANGUAGE GADTs, MultiParamTypeClasses, TypeSynonymInstances #-}
-
+{-# LANGUAGE ViewPatterns #-}
 import qualified Data.Text as T (Text, concat, pack, unpack)
 import Data.ByteString (ByteString)
 import Database.Persist.Sqlite
@@ -67,13 +67,28 @@ data Game = Game {
       deck :: IO Cards
 }
 
-data MyApp = MyApp ConnectionPool (TChan T.Text) (MVar [IO Game] ) (MVar Int)
+data MyApp = MyApp {
+      cnpool :: ConnectionPool,
+      games :: MVar [IO Game],
+      nextGameId :: MVar Int,
+      globChan :: TChan T.Text
+}
+
+newGame :: MyApp -> IO Int
+newGame tfoo =
+    modifyMVar (nextGameId tfoo) incrementMVar
+  where
+    incrementMVar :: Int -> IO (Int, Int)
+    incrementMVar value = return (value+1, value)
+ 
+
 
 mkYesod "MyApp" [parseRoutes|
-/ HomeR GET
-/game GameR GET
-/lobby LobbyR GET
-/auth AuthR Auth getAuth
+/          HomeR GET
+/game/#Int GameR GET
+/game      GamesR POST
+/lobby     LobbyR GET
+/auth      AuthR Auth getAuth
 |]
 
 instance Yesod MyApp
@@ -84,8 +99,8 @@ instance RenderMessage MyApp FormMessage where
 instance YesodPersist MyApp where
     type YesodPersistBackend MyApp = SqlBackend
     runDB action = do
-        MyApp pool _ _ _ <- getYesod
-        runSqlPool action pool
+        myApp  <- getYesod
+        runSqlPool action $ cnpool myApp 
 
 instance YesodAuth MyApp where
     type AuthId MyApp = Username
@@ -125,7 +140,9 @@ getLobbyR = do
     Just u -> defaultLayout $ [whamlet|
 <p>Welcome to the lobby.
 <p>You are logged in as #{u}
-<p><a href="@{GameR}">Begin the game</a>
+<form method=post action=@{GamesR}>
+              <input type=submit value="VS. Human">
+
 <p><a href="@{AuthR LogoutR}">Logout</a>
     |]
 
@@ -200,50 +217,65 @@ main :: IO ()
 main = do
   games <- newMVar gameStream
   nextGameId <- newMVar 1
+  globChan <- liftIO $ atomically newBroadcastTChan
   runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
     liftIO $ runSqlPool (runMigration migrateAll) pool
-    chan <- liftIO $ atomically newBroadcastTChan
-    liftIO $ warp 3000 $ MyApp pool chan games nextGameId
+    liftIO $ warp 3000 $ MyApp pool games nextGameId globChan
 
 
+postGamesR :: Handler Html
+postGamesR = do
+  myApp <- getYesod  
+  gid <- liftIO $ newGame myApp
+  redirect $ GameR gid
 
-getGameR :: Handler Html
-getGameR = do
+getGame :: Int -> WebSocketsT Handler Game
+getGame gid = do
+  tfoo <- getYesod
+  maxId <- liftIO $ readMVar $ nextGameId tfoo
+  list  <- liftIO $ readMVar $ games tfoo
+  if gid < maxId
+    then (liftIO $ (list) !! gid) >>= (\game -> return game)
+    else notFound
+
+
+getGameR :: Int -> Handler Html
+getGameR gid = do
     maid <- maybeAuthId
     case maid of
         Nothing -> redirect $ AuthR LoginR
         Just u -> do 
-                webSockets (chatApp newDeck u)
+                webSockets (chatApp gid u)
                 defaultLayout $ do
                     $(whamletFile "gamepage.hamlet")
                     toWidget $(luciusFile "gamepage.lucius")
                     toWidget $(juliusFile "gamepage.julius")
 
-chatApp :: [Card] -> T.Text -> WebSocketsT Handler ()
-chatApp deck u  = do
-    sendTextData ("CHATS: Welcome to Set, press deal to begin the game." :: T.Text)
---    name <- receiveData
---    sendTextData $ "CHATS: Welcome, " <> name
-    MyApp _ writeChan _ _ <- getYesod
+chatApp :: Int -> T.Text -> WebSocketsT Handler ()
+chatApp gid u  = do
+  game <- getGame gid
+  myApp <- getYesod
+  let writeChan = globChan myApp
+  sendTextData ("CHATS: Welcome to Set, press deal to begin the game." :: T.Text)
+  readChan <- liftIO $ atomically $ do
+                    writeTChan writeChan $ "CHATS: " <> u <> " has joined the chat"
+                    dupTChan writeChan
 
-    readChan <- liftIO $ atomically $ do
-        writeTChan writeChan $ "CHATS: " <> u <> " has joined the chat"
-        dupTChan writeChan
-
-    let (dealt, remaining) = splitAt 12 $ deck
-    let wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
-    race_
-          (forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData )
-          (sourceWS $$ mapM_C (\msg ->
-            case msg of 
-              "BEGIN"  -> wrCh msg
-              "READY"  -> playLoop (dealt, remaining) writeChan
-              _          -> wrCh "error"))
+  (dealt, remaining) <- liftIO $ deck game
+  let (firstDeal, firstRem) = splitAt 12 remaining
+  let wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
+  race_
+                  (forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData )
+                  (sourceWS $$ mapM_C (\msg ->
+                                           case msg of 
+                                             "BEGIN"  -> wrCh msg
+                                             "READY"  -> playLoop (firstDeal, firstRem) writeChan
+                                             _          -> wrCh "error"))
 
     
         
 
-playLoop :: ([Card], [Card]) -> (TChan T.Text) ->  WebSocketsT Handler ()
+playLoop :: Cards -> (TChan T.Text) ->  WebSocketsT Handler ()
 playLoop (dealt, remaining) writeChan
     | endGame    = do return ()
     | dealMore   = playLoop (dealt ++ (take 3 remaining), drop 3 remaining) writeChan
@@ -268,6 +300,7 @@ playLoop (dealt, remaining) writeChan
           endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 
           displayBoard = do 
             wrCh $ (T.pack $ "CARDS" ++ (show $ map cardnum dealt))
-            wrCh $ (T.pack $ "DEBUG" ++ (show $ map cardnum dealt))
+            wrCh $ (T.pack $ "DEBUG: " ++ (show $ map cardnum dealt))
+            wrCh $ (T.pack $ "DEBUG: " ++ (show $ length $ remaining)) 
           wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
         

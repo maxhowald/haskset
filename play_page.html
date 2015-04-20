@@ -24,12 +24,13 @@ function dealCards(cardString){
 	var i = 1;
 	var j = 1;
 	var card;
+  var prefix = "images/"
 	while (cardString.length != 0){
 		var comma = cardString.indexOf(",");
 		var name = "slot" + i + j;
 		if (comma == -1){
 			card = cardString.slice(0);
-			document.getElementById(name).src = card + ".gif";
+			document.getElementById(name).src = prefix + card + ".gif";
 			document.getElementById(name).tag = card;
 			break;
 		}
@@ -38,7 +39,7 @@ function dealCards(cardString){
 			while (i<4){
 				card = cardString.slice(0, comma);
 				document.getElementById("extraCard" + i).style.display = "inline";
-				document.getElementById("extraCard" + i).src = card + ".gif";
+				document.getElementById("extraCard" + i).src = prefix + card + ".gif";
 				document.getElementById("extraCard" + i).tag = card;
 				cardString = cardString.substr(comma + 1);
 				i++;
@@ -47,7 +48,7 @@ function dealCards(cardString){
 		
 		else{
 			card = cardString.slice(0, comma);
-			document.getElementById(name).src =  card + ".gif";
+			document.getElementById(name).src =  prefix + card + ".gif";
 			document.getElementById(name).tag = card;
 			cardString = cardString.substr(comma + 1);
 		}
@@ -83,36 +84,38 @@ function submitCards(){
 }
 
 function highlight(slot, card){
-	if(isDealt == true){
+    var done = false;
+		console.log("called highlight on " + card);
 		if (isHighlighted.length > 0){
 			for(index = 0; index < isHighlighted.length; index++){
+				console.log("loopcheck " + index + " :" + isHighlighted[index]);
 				if (isHighlighted[index] == card){
+					console.log("we're getting here");
+					var done = true;									 
 					document.getElementById(slot).className = "card";
 					isHighlighted.splice(index, 1);
-					break;
 				}
- 
-				else{
+      }
+
+}
+
+	 if (done == false) {
 					if (isHighlighted.length < 3){
 						document.getElementById(slot).className = "selectedCard";
 						isHighlighted.push(card);
-						break;
-					}
-				}
-			}
-		}
-		else{
-			document.getElementById(slot).className = "selectedCard";
-			isHighlighted.push(card);
-		}
+					
+				  	}
+				 }
+
 		
+
+
 		if (isHighlighted.length == 3){
 			document.getElementById("submit").disabled = false;
 		}
 		else{
 			document.getElementById("submit").disabled = true;
 		}
-	}
 }
 
 //still need to make function that rearranges scoreboard when message recieved.

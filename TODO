@@ -25,6 +25,9 @@ MAX:
 -test endgame/reset conditions... (ugh)
 
 
+-display a summary of what's going on in the lobby... game in progress, num of players in each room, etc...
+-drop chat in lobby?
+
 
 (old)
 ???/JOINT: (lower priority)

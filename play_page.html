@@ -19,24 +19,33 @@ var toSubmit = "";
 var isHighlighted = [];
 var isDealt = false;
 
-function dealCards(cardString){
+function dealCards(cardString, isReset){
 	isDealt = true;
 	var i = 1;
 	var j = 1;
 	var card;
-  var prefix = "images/"
+    var prefix = "images/"
+	if (isReset == true){
+		isHighlighted = [];
+	}
 	while (cardString.length != 0){
 		var comma = cardString.indexOf(",");
 		var name = "slot" + i + j;
+		if (isReset == true){
+			document.getElementById(name).className = "card";
+		}
 		if (comma == -1){
 			card = cardString.slice(0);
 			document.getElementById(name).src = prefix + card + ".gif";
 			document.getElementById(name).tag = card;
 			break;
 		}
-		else if(i == 4){
+		else if(i == 4){	//for extra cards
 			i = 1;
 			while (i<4){
+				if (isReset == true){
+					document.getElementById(name).className = "card";
+				}
 				card = cardString.slice(0, comma);
 				document.getElementById("extraCard" + i).style.display = "inline";
 				document.getElementById("extraCard" + i).src = prefix + card + ".gif";
@@ -46,7 +55,9 @@ function dealCards(cardString){
 			}
 		}
 		
-		else{
+		//TO DO. MAKE AN ELSE IF (i == 5) FOR EXTRA CARDS.
+		
+		else{			
 			card = cardString.slice(0, comma);
 			document.getElementById(name).src =  prefix + card + ".gif";
 			document.getElementById(name).tag = card;

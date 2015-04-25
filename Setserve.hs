@@ -37,6 +37,8 @@ import qualified Data.List as L (delete)
 import Conduit
 import Control.Concurrent.MVar
 
+import System.Random as Random
+import System.Random.Shuffle (shuffle')
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 User
     username T.Text
@@ -64,7 +66,7 @@ instance PersistUserCredentials User where
 data Game = Game {
       players :: [String],
       channel :: TChan T.Text,
-      deck :: IO Cards
+      deck :: Cards
 }
 
 data MyApp = MyApp {
@@ -200,27 +202,31 @@ noResetR = do
 
 
 
-createGame :: IO Game
-createGame = do
+createGame :: StdGen -> IO Game
+createGame rnd = do
   newchan <- liftIO $ atomically newBroadcastTChan
+  let myDeck = ([], shuffle' newDeck (length newDeck) rnd)
   return Game {
                players = [],
                channel = newchan,
-               deck = getDeck
+               deck = myDeck
              }
   
 
-gameStream :: [IO Game]
-gameStream = repeat createGame
+gameStream :: StdGen -> [IO Game]
+gameStream rnd = map (\gen -> createGame gen) infgens
+    where infgens = scanl (\x f -> f x) rnd infn
+          infn = repeat (snd . next)
 
 main :: IO ()
 main = do
-  games <- newMVar gameStream
-  nextGameId <- newMVar 1
-  globChan <- liftIO $ atomically newBroadcastTChan
+  seedP   <- liftIO $ Random.getStdGen >>= (\x -> return $ snd $ next x)
+  theGames <- newMVar (gameStream seedP)
+  firstGameId <- newMVar 1
+  globalChan <- liftIO $ atomically newBroadcastTChan
   runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
     liftIO $ runSqlPool (runMigration migrateAll) pool
-    liftIO $ warp 3000 $ MyApp pool games nextGameId globChan
+    liftIO $ warp 3000 $ MyApp pool theGames firstGameId globalChan
 
 
 postGamesR :: Handler Html
@@ -260,8 +266,17 @@ chatApp gid u  = do
   readChan <- liftIO $ atomically $ do
                     writeTChan writeChan $ "CHATS: " <> u <> " has joined the chat"
                     dupTChan writeChan
+  let (_, remaining) = deck game
+  --(dealt, remaining) <- liftIO $ IO (deck game)
+  sendTextData (T.pack $ "DEBUG: (deck1) " ++ (show $ remaining))
 
-  (dealt, remaining) <- liftIO $ deck game
+  game <- getGame gid
+  let (_, remaining) = deck game
+  --(dealt, remaining) <- liftIO $ deck game
+  sendTextData (T.pack $ "DEBUG: (deck2) " ++ (show $ remaining))
+  
+
+                                  
   let (firstDeal, firstRem) = splitAt 12 remaining
   let wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
   race_

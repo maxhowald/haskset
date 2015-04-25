@@ -65,15 +65,14 @@ instance PersistUserCredentials User where
 
 data Game = Game {
       players :: [String],
-      channel :: TChan T.Text,
       deck :: Cards
 }
 
 data MyApp = MyApp {
       cnpool :: ConnectionPool,
-      games :: MVar [IO Game],
+      games :: MVar [Game],
       nextGameId :: MVar Int,
-      globChan :: TChan T.Text
+      globChans :: [TChan T.Text]
 }
 
 newGame :: MyApp -> IO Int
@@ -202,18 +201,15 @@ noResetR = do
 
 
 
-createGame :: StdGen -> IO Game
-createGame rnd = do
-  newchan <- liftIO $ atomically newBroadcastTChan
-  let myDeck = ([], shuffle' newDeck (length newDeck) rnd)
-  return Game {
-               players = [],
-               channel = newchan,
-               deck = myDeck
-             }
+createGame :: StdGen -> Game
+createGame rnd = let myDeck = ([], shuffle' newDeck (length newDeck) rnd)
+                 in Game {
+                          players = [],
+                          deck = myDeck
+                        }
   
 
-gameStream :: StdGen -> [IO Game]
+gameStream :: StdGen -> [Game]
 gameStream rnd = map (\gen -> createGame gen) infgens
     where infgens = scanl (\x f -> f x) rnd infn
           infn = repeat (snd . next)
@@ -223,10 +219,12 @@ main = do
   seedP   <- liftIO $ Random.getStdGen >>= (\x -> return $ snd $ next x)
   theGames <- newMVar (gameStream seedP)
   firstGameId <- newMVar 1
-  globalChan <- liftIO $ atomically newBroadcastTChan
+  let globalChan =  map atomically $ replicate 2 $ newBroadcastTChan
+  globchan1 <- (globalChan !! 0)
+  globchan2 <- (globalChan !! 1)
   runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
     liftIO $ runSqlPool (runMigration migrateAll) pool
-    liftIO $ warp 3000 $ MyApp pool theGames firstGameId globalChan
+    liftIO $ warp 3000 $ MyApp pool theGames firstGameId [globchan1, globchan2]
 
 
 postGamesR :: Handler Html
@@ -235,14 +233,7 @@ postGamesR = do
   gid <- liftIO $ newGame myApp
   redirect $ GameR gid
 
-getGame :: Int -> WebSocketsT Handler Game
-getGame gid = do
-  tfoo <- getYesod
-  maxId <- liftIO $ readMVar $ nextGameId tfoo
-  list  <- liftIO $ readMVar $ games tfoo
-  if gid < maxId
-    then (liftIO $ (list) !! gid) >>= (\game -> return game)
-    else notFound
+
 
 
 getGameR :: Int -> Handler Html
@@ -259,9 +250,12 @@ getGameR gid = do
 
 chatApp :: Int -> T.Text -> WebSocketsT Handler ()
 chatApp gid u  = do
-  game <- getGame gid
   myApp <- getYesod
-  let writeChan = globChan myApp
+  gameList <- liftIO $  readMVar $ games myApp
+  let maxId = readMVar $ nextGameId myApp
+  let game = gameList !! gid
+  let writeChan = (globChans myApp) !! (gid - 1)
+
   sendTextData ("CHATS: Welcome to Set, press deal to begin the game." :: T.Text)
   readChan <- liftIO $ atomically $ do
                     writeTChan writeChan $ "CHATS: " <> u <> " has joined the chat"
@@ -270,7 +264,6 @@ chatApp gid u  = do
   --(dealt, remaining) <- liftIO $ IO (deck game)
   sendTextData (T.pack $ "DEBUG: (deck1) " ++ (show $ remaining))
 
-  game <- getGame gid
   let (_, remaining) = deck game
   --(dealt, remaining) <- liftIO $ deck game
   sendTextData (T.pack $ "DEBUG: (deck2) " ++ (show $ remaining))

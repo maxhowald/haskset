@@ -1,26 +1,32 @@
 GAVIN:
 
--make cards selectable/submittable: the user should click on a card to
- select it. when the user presses the set button, the cards are
- submitted to the server.  
-
- (concretely, implement the javascript function setbutton.onclick()
- which figures out which cards are currently selected and then simply
- calls websocket_conn.send(<cardnums>) )
-
   -bonus: would be nice if a maximum of three cards are
    selectable. when the user clicks a fourth card, the first one they
    selected is automatically unselected
 
+	 -display score, list of players, chat??? whatever there is room for, on screen...
+   -what to show at the end of the game?
+   - show a pile of cards, remaining?
+	 -perhaps when a set is made, the person who got the set is highlighted.
+or event queue, shownig... x made a set... etc.
+
+
+
+
 MAX:
 
--implement multiple games (simple) 
+-implement more game rooms (simple but annoying)
 
--implement multiple players (a bit harder, requires using
- threads/channels/concurrency in haskell, but I have lots of example
- code...)
+-harden concurrency/stress test/debug multiplayer games
+
+-what to do if someone leaves in the middle of a game? nothing, I suppose. but what if they come back?
+-lock out new players after the game begins.
+
+-test endgame/reset conditions... (ugh)
 
 
+
+(old)
 ???/JOINT: (lower priority)
 
 -implement score: a javascript function which takes a SCORE string and

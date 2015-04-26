@@ -73,8 +73,8 @@ data MyApp = MyApp {
       games :: MVar [Game],
       nextGameId :: MVar Int,
       globChans :: [TChan T.Text],
-      room1gid :: MVar (Maybe Int),
-      room2gid :: MVar (Maybe Int)
+      room1gid :: MVar  Int,
+      room2gid :: MVar  Int
 }
 
 newGame :: MyApp -> IO Int
@@ -135,20 +135,38 @@ getHomeR = do
 
 
 
+getBoard :: Int -> HandlerT MyApp IO (Cards, [String])
+getBoard gid = do
+  myApp <- getYesod
+  gameList <- liftIO $ readMVar $ games myApp
+  let game = gameList !! gid
+  return (deck game, players game)
+
+
 getLobbyR :: Handler Html
 getLobbyR = do
   maid <- maybeAuthId
+  myApp <- getYesod
   case maid of
     Nothing -> redirect $ AuthR LoginR
-    Just u -> defaultLayout $ [whamlet|
+    Just u -> do 
+              r1 <- liftIO $ readMVar (room1gid myApp)
+              r2 <- liftIO $ readMVar (room2gid myApp)
+              ((deal1,rem1),pl1) <- getBoard r1
+              ((deal2,rem2),pl2) <- getBoard r2
+              let c1 = (length deal1) + (length rem1)
+              let c2 = (length deal2) + (length rem2)
+              let p1 = T.pack $ L.intercalate ", " pl1
+              let p2 = T.pack $ L.intercalate ", " pl2
+              defaultLayout $ [whamlet|
 <p>Welcome to the lobby.
 <p>You are logged in as #{u}
-<p><a href="@{Room1R}">Enter room 1
-<p><a href="@{Room2R}">Enter room 2
+<p><a href="@{Room1R}">Enter room 1</a> (players: #{p1}) (cards left in play: #{c1})
+<p><a href="@{Room2R}">Enter room 2</a> (players: #{p2}) (cards left in play: #{c2})
 
 
 <p><a href="@{AuthR LogoutR}">Logout</a>
-    |]
+          |]
 
 
 getNewAccountER :: HandlerT Auth (HandlerT MyApp IO) Html
@@ -222,8 +240,8 @@ main = do
   seedP   <- liftIO $ Random.getStdGen >>= (\x -> return $ snd $ next x)
   theGames <- newMVar (gameStream seedP)
   firstGameId <- newMVar 1
-  r1g <- newMVar Nothing
-  r2g <- newMVar Nothing
+  r1g <- newMVar 1
+  r2g <- newMVar 2
   let globalChan =  map atomically $ replicate 2 $ newBroadcastTChan
   globchan1 <- (globalChan !! 0)
   globchan2 <- (globalChan !! 1)
@@ -242,14 +260,8 @@ getRoom1R = do
         Nothing -> redirect $ AuthR LoginR
         Just u -> do 
                 currGame <- liftIO $ readMVar (room1gid myApp)
-                case currGame of
-                  Nothing -> do 
-                    gid <- liftIO $ newGame myApp
-                    liftIO $ modifyMVar_ (room1gid myApp) (\_ -> return (Just gid))
-                    redirect Room1R
-                  Just gid -> do
-                    webSockets (chatApp gid u 1)
-                    defaultLayout $ do
+                webSockets (chatApp currGame u 1)
+                defaultLayout $ do
                                 $(whamletFile "gamepage.hamlet")
                                 toWidget $(luciusFile "gamepage.lucius")
                                 toWidget $(juliusFile "gamepage.julius")
@@ -262,14 +274,8 @@ getRoom2R = do
         Nothing -> redirect $ AuthR LoginR
         Just u -> do 
                 currGame <- liftIO $ readMVar (room2gid myApp)
-                case currGame of
-                  Nothing -> do 
-                    gid <- liftIO $ newGame myApp
-                    liftIO $ modifyMVar_ (room2gid myApp) (\_ -> return (Just gid))
-                    redirect Room2R
-                  Just gid -> do
-                    webSockets (chatApp gid u 2)
-                    defaultLayout $ do
+                webSockets (chatApp currGame u 2)
+                defaultLayout $ do
                                 $(whamletFile "gamepage.hamlet")
                                 toWidget $(luciusFile "gamepage.lucius")
                                 toWidget $(juliusFile "gamepage.julius")
@@ -332,8 +338,8 @@ playLoop gid (dealt, remaining) writeChan u
                                           if isSet $ pickedSet 
                                           then do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",CORRECT")
-                                            ((newDeal, newRem), players) <- refBoard gid
-                                            let ug = Game { players = [], deck = (foldr L.delete newDeal pickedSet, newRem) }
+                                            ((newDeal, newRem), cplayers) <- refBoard gid
+                                            let ug = Game { players = cplayers, deck = (foldr L.delete newDeal pickedSet, newRem) }
                                             updateGame gid ug
                                             ((newDeal, newRem), players) <- refBoard gid
                                             playLoop gid  (newDeal, newRem) writeChan u
@@ -376,6 +382,8 @@ refBoard gid = do
   gameList <- liftIO $ readMVar $ games myApp
   let game = gameList !! gid
   return (deck game, players game)
+
+
 
 replace' :: Int -> a -> [a] -> [a]
 replace' index element list = (take index list) ++ [element] ++ (drop (index+1) list)

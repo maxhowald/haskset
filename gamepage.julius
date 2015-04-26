@@ -1,5 +1,8 @@
 function dealCards(cardString){
-
+	if (oldcardstr == cardString) {
+			return;
+			}
+	oldcardstr = cardString
 	for (ind = 1; ind < 4; ind++) {
 		document.getElementById("extraCard" + ind).style.display = "none";
 		document.getElementById("extraCard" + ind).className = "card";
@@ -50,6 +53,7 @@ function dealCards(cardString){
 	}
 }
 
+var oldcardstr = "";
 var url = document.URL,
 output = document.getElementById("output"),
 form = document.getElementById("form"),
@@ -61,25 +65,31 @@ conn = new WebSocket(url);
 
 conn.onmessage = function(e) {
 		var	msg = e.data;
-		switch(msg.substring(0,5)) {
+		switch(msg.substring(0,5)) { //first five chars specify the type of msg.
 		case "DEBUG":
 				console.log(msg);
 				break;
-		case "CARDS":
+		case "CARDS": //format: CARDS[1,2..]
 				dealCards(msg.substring(6, msg.length - 1)); //strip away the [].
 				break;
-    case "SCORE":
-				//not implemented
+    case "EVENT": //format: EVENT: "player2", WRONG/RIGHT
 				console.log(msg);
 				break;
 		case "CHATS":
 				//not implemented
 				console.log(msg);
 				break;
-		case "BEGIN":
+		case "BEGIN": //sent when someone starts the game. just acks that you're still here. 
 				console.log(msg);
 				conn.send("READY");
 				break;
+		case "GOVER": //what to to when the game ends. Probably, redirect to a scoreboard page.
+				window.location.replace("@{LobbyR}");
+				break;
+	  case "PLAYR": //format PLAYR: "player1", "p2", "p3", "max"
+				console.log(msg);
+				break;
+				
 		}  			  
 };
 

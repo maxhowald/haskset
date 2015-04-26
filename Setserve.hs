@@ -31,7 +31,7 @@ import SetAssets
 import Text.Julius
 import Text.Lucius
 import qualified Text.Read as TR (read)
-import qualified Data.List as L (delete)
+import qualified Data.List as L (delete, intercalate)
 import Data.Maybe (listToMaybe)
 
 import Conduit
@@ -244,7 +244,6 @@ getRoom1R = do
                 currGame <- liftIO $ readMVar (room1gid myApp)
                 case currGame of
                   Nothing -> do 
-                    myApp <- getYesod
                     gid <- liftIO $ newGame myApp
                     liftIO $ modifyMVar_ (room1gid myApp) (\_ -> return (Just gid))
                     redirect Room1R
@@ -265,7 +264,6 @@ getRoom2R = do
                 currGame <- liftIO $ readMVar (room2gid myApp)
                 case currGame of
                   Nothing -> do 
-                    myApp <- getYesod
                     gid <- liftIO $ newGame myApp
                     liftIO $ modifyMVar_ (room2gid myApp) (\_ -> return (Just gid))
                     redirect Room2R
@@ -279,20 +277,21 @@ getRoom2R = do
 chatApp :: Int -> T.Text -> Int -> WebSocketsT Handler ()
 chatApp gid u rid  = do
   myApp <- getYesod
-  gameList <- liftIO $  readMVar $ games myApp
-
-  let game = gameList !! gid
   let writeChan = (globChans myApp) !! (rid - 1)
-
+  let wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
   sendTextData ("CHATS: Welcome to Set, press deal to begin the game." :: T.Text)
   sendTextData $ T.pack ("DEBUG: gid: " ++ (show gid))
   readChan <- liftIO $ atomically $ do
                     writeTChan writeChan $ "CHATS: " <> u <> " has joined the chat"
                     dupTChan writeChan
 
-                                  
 
-  let wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
+  ((newDeal, newRem), gplayers) <- refBoard gid                                  
+  let ug = Game { players = ((show u):gplayers) , deck = (newDeal, newRem)}
+  updateGame gid ug 
+  ((newDeal, newRem), gplayers) <- refBoard gid                                  
+  wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " gplayers))
+  
   race_
                   (forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData )
                   (sourceWS $$ mapM_C (\msg ->
@@ -300,66 +299,70 @@ chatApp gid u rid  = do
                                              "BEGIN"  -> do
                                                       wrCh msg
                                              "READY"  -> do 
-                                                      (firstDeal, firstRem) <- refBoard gid
-                                                      playLoop gid (firstDeal, firstRem) writeChan 
-                                                      wrCh "DEBUG: GAMEOVER"
+                                                      ((firstDeal, firstRem), _) <- refBoard gid
+                                                      playLoop gid (firstDeal, firstRem) writeChan u
+                                                      wrCh "GOVER"
                                              _          -> wrCh "error"))
 
     
         
 
-playLoop :: Int -> Cards -> (TChan T.Text) ->  WebSocketsT Handler ()
-playLoop gid (dealt, remaining) writeChan 
+playLoop :: Int -> Cards -> (TChan T.Text) -> T.Text ->  WebSocketsT Handler ()
+playLoop gid (dealt, remaining) writeChan u
     | endGame    = do return ()
     | dealMore   = do
-  (newDeal, newRem) <- refBoard gid
-  let ug = Game { players = [], deck =  (newDeal ++ (take 3 newRem), drop 3 newRem) }
-  updateDeck gid ug
-  (newDeal, newRem) <- refBoard gid
-  playLoop gid (newDeal, newRem) writeChan
+  ((newDeal, newRem), newplayers) <- refBoard gid
+  let ug = Game { players = newplayers, deck =  (newDeal ++ (take 3 newRem), drop 3 newRem) }
+  updateGame gid ug
+  ((newDeal, newRem), gplayers) <- refBoard gid
+  playLoop gid (newDeal, newRem) writeChan u
      | otherwise  = do
-    wrCh $ (T.pack "DEBUG: Current Board")
+    ((_, _), gplayers) <- refBoard gid
+    wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " gplayers))
     displayBoard
-    wrCh (T.pack $ "DEBUG: " ++ (show dealt))
-    wrCh (T.pack "DEBUG: sets on the board")
-    wrCh (T.pack $ "DEBUG: " ++  (show $ sets dealt))
     sourceWS $$ mapM_C (\input -> do 
-                          let mindices = maybeRead (T.unpack input)  --add input checking
+                          let mindices = maybeRead (T.unpack input)  
                           case mindices of 
                             Nothing -> do
                               wrCh ("DEBUG: No parse" :: T.Text)
-                              (newDeal, newRem) <- refBoard gid
-                              playLoop gid  (newDeal, newRem) writeChan
+                              ((newDeal, newRem), players) <- refBoard gid
+                              playLoop gid  (newDeal, newRem) writeChan u
                             Just indices -> do
                                           let pickedSet = map (\i -> newDeck !! (i-1)) indices
                                           if isSet $ pickedSet 
                                           then do
-                                            wrCh ("DEBUG: Correct" :: T.Text)
-                                            (newDeal, newRem) <- refBoard gid
+                                            wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",CORRECT")
+                                            ((newDeal, newRem), players) <- refBoard gid
                                             let ug = Game { players = [], deck = (foldr L.delete newDeal pickedSet, newRem) }
-                                            updateDeck gid ug
-                                            (newDeal, newRem) <- refBoard gid
-                                            playLoop gid  (newDeal, newRem) writeChan
+                                            updateGame gid ug
+                                            ((newDeal, newRem), players) <- refBoard gid
+                                            playLoop gid  (newDeal, newRem) writeChan u
                                           else do
-                                            wrCh ("DEBUG: Wrong" :: T.Text)
-                                            (newDeal, newRem) <- refBoard gid
-                                            playLoop gid  (newDeal, newRem) writeChan)
+                                            wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",WRONG")
+                                            ((newDeal, newRem), players) <- refBoard gid
+                                            playLoop gid  (newDeal, newRem) writeChan u) 
 
 
     where dealMore = (not $ anySets dealt) || (length dealt < 12)
           endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 
           displayBoard = do 
+            wrCh $ (T.pack "DEBUG: Current Board")
             wrCh $ (T.pack $ "CARDS" ++ (show $ map cardnum dealt))
             wrCh $ (T.pack $ "DEBUG: " ++ (show $ map cardnum dealt))
-            wrCh $ (T.pack $ "DEBUG: " ++ (show $ length $ remaining)) 
+            wrCh $ (T.pack $ "DEBUG: " ++ (show $ length $ remaining))             
+            wrCh (T.pack $ "DEBUG: " ++ (show dealt))
+            wrCh (T.pack "DEBUG: sets on the board")
+            wrCh (T.pack $ "DEBUG: " ++  (show $ sets dealt))
+
+
           wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
         
 maybeRead :: Read a => String -> Maybe a
 maybeRead = fmap fst . listToMaybe . filter (null . snd) . reads
 
 
-updateDeck :: Int -> Game -> WebSocketsT Handler ()
-updateDeck gid game = do 
+updateGame :: Int -> Game -> WebSocketsT Handler ()
+updateGame gid game = do 
   myApp <- getYesod
   _ <-  liftIO $ modifyMVar (games myApp) (\gamess ->
                                      return (replace' gid (game) gamess, gamess))
@@ -367,12 +370,12 @@ updateDeck gid game = do
 
 
 
-refBoard :: Int -> WebSocketsT Handler Cards
+refBoard :: Int -> WebSocketsT Handler (Cards, [String])
 refBoard gid = do
   myApp <- getYesod
   gameList <- liftIO $ readMVar $ games myApp
   let game = gameList !! gid
-  return (deck game)
+  return (deck game, players game)
 
 replace' :: Int -> a -> [a] -> [a]
 replace' index element list = (take index list) ++ [element] ++ (drop (index+1) list)

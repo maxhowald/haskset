@@ -31,7 +31,7 @@ import SetAssets
 import Text.Julius
 import Text.Lucius
 import qualified Text.Read as TR (read)
-import qualified Data.List as L (delete, intercalate)
+import qualified Data.List as L (delete, intercalate, nub)
 import Data.Maybe (listToMaybe)
 
 import Conduit
@@ -183,7 +183,7 @@ myjswid = do
   toWidget [julius| 
                   $(document).ready(function(){
                                      
-                                      $("#hident3").prop('value', 'unused@unused');
+                                      $("#hident3").prop('value', 'user@set');
                                       $("#hident3").hide();
                                       $("label[for='hident3']").hide();
                   }); 
@@ -293,7 +293,7 @@ chatApp gid u rid  = do
 
 
   ((newDeal, newRem), gplayers) <- refBoard gid                                  
-  let ug = Game { players = ((show u):gplayers) , deck = (newDeal, newRem)}
+  let ug = Game { players = L.nub ((show u):gplayers) , deck = (newDeal, newRem)}
   updateGame gid ug 
   ((newDeal, newRem), gplayers) <- refBoard gid                                  
   wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " gplayers))
@@ -318,7 +318,7 @@ playLoop gid (dealt, remaining) writeChan u
     | endGame    = do return ()
     | dealMore   = do
   ((newDeal, newRem), newplayers) <- refBoard gid
-  let ug = Game { players = newplayers, deck =  (newDeal ++ (take 3 newRem), drop 3 newRem) }
+  let ug = Game { players = L.nub newplayers, deck =  (newDeal ++ (take 3 newRem), drop 3 newRem) }
   updateGame gid ug
   ((newDeal, newRem), gplayers) <- refBoard gid
   playLoop gid (newDeal, newRem) writeChan u
@@ -339,7 +339,7 @@ playLoop gid (dealt, remaining) writeChan u
                                           then do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",CORRECT")
                                             ((newDeal, newRem), cplayers) <- refBoard gid
-                                            let ug = Game { players = cplayers, deck = (foldr L.delete newDeal pickedSet, newRem) }
+                                            let ug = Game { players = L.nub cplayers, deck = (foldr L.delete newDeal pickedSet, newRem) }
                                             updateGame gid ug
                                             ((newDeal, newRem), players) <- refBoard gid
                                             playLoop gid  (newDeal, newRem) writeChan u

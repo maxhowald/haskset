@@ -73,8 +73,7 @@ data MyApp = MyApp {
       games :: MVar [Game],
       nextGameId :: MVar Int,
       globChans :: [TChan T.Text],
-      room1gid :: MVar  Int,
-      room2gid :: MVar  Int
+      roomgids :: MVar  [Int]
 }
 
 newGame :: MyApp -> IO Int
@@ -88,8 +87,7 @@ newGame tfoo =
 
 mkYesod "MyApp" [parseRoutes|
 /          HomeR GET
-/game/room1 Room1R GET
-/game/room2 Room2R GET
+/game/room/#Int RoomR GET
 /lobby     LobbyR GET
 /auth      AuthR Auth getAuth
 |]
@@ -150,10 +148,10 @@ getLobbyR = do
   case maid of
     Nothing -> redirect $ AuthR LoginR
     Just u -> do 
-              r1 <- liftIO $ readMVar (room1gid myApp)
-              r2 <- liftIO $ readMVar (room2gid myApp)
-              ((deal1,rem1),pl1) <- getBoard r1
-              ((deal2,rem2),pl2) <- getBoard r2
+              rgids <- liftIO $ readMVar (roomgids myApp)
+
+              ((deal1,rem1),pl1) <- getBoard (rgids !! 0)
+              ((deal2,rem2),pl2) <- getBoard (rgids !! 1)
               let c1 = (length deal1) + (length rem1)
               let c2 = (length deal2) + (length rem2)
               let p1 = T.pack $ L.intercalate ", " pl1
@@ -161,8 +159,8 @@ getLobbyR = do
               defaultLayout $ [whamlet|
 <p>Welcome to the lobby.
 <p>You are logged in as #{u}
-<p><a href="@{Room1R}">Enter room 1</a> (players: #{p1}) (cards left in play: #{c1})
-<p><a href="@{Room2R}">Enter room 2</a> (players: #{p2}) (cards left in play: #{c2})
+<p><a href="@{RoomR 1}">Enter room 1</a> (players: #{p1}) (cards left in play: #{c1})
+<p><a href="@{RoomR 2}">Enter room 2</a> (players: #{p2}) (cards left in play: #{c2})
 
 
 <p><a href="@{AuthR LogoutR}">Logout</a>
@@ -240,45 +238,31 @@ main = do
   seedP   <- liftIO $ Random.getStdGen >>= (\x -> return $ snd $ next x)
   theGames <- newMVar (gameStream seedP)
   firstGameId <- newMVar 1
-  r1g <- newMVar 1
-  r2g <- newMVar 2
-  let globalChan =  map atomically $ replicate 2 $ newBroadcastTChan
-  globchan1 <- (globalChan !! 0)
-  globchan2 <- (globalChan !! 1)
+  rgids <- newMVar [1,2]
+  globalChans <- sequence $  map atomically $ replicate 5 $ newBroadcastTChan
+
   runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
     liftIO $ runSqlPool (runMigration migrateAll) pool
-    liftIO $ warp 3000 $ MyApp pool theGames firstGameId [globchan1, globchan2] r1g r2g
+    liftIO $ warp 3000 $ MyApp pool theGames firstGameId globalChans rgids
 
 
   
 
-getRoom1R :: Handler Html
-getRoom1R = do
+getRoomR :: Int -> Handler Html
+getRoomR n = do
     myApp <- getYesod
     maid <- maybeAuthId
     case maid of
         Nothing -> redirect $ AuthR LoginR
         Just u -> do 
-                currGame <- liftIO $ readMVar (room1gid myApp)
-                webSockets (chatApp currGame u 1)
+                currGame <- liftIO $ readMVar (roomgids myApp)
+                webSockets (chatApp (currGame !! (n-1)) u n)
                 defaultLayout $ do
                                 $(whamletFile "gamepage.hamlet")
                                 toWidget $(luciusFile "gamepage.lucius")
                                 toWidget $(juliusFile "gamepage.julius")
 
-getRoom2R :: Handler Html
-getRoom2R = do
-    myApp <- getYesod
-    maid <- maybeAuthId
-    case maid of
-        Nothing -> redirect $ AuthR LoginR
-        Just u -> do 
-                currGame <- liftIO $ readMVar (room2gid myApp)
-                webSockets (chatApp currGame u 2)
-                defaultLayout $ do
-                                $(whamletFile "gamepage.hamlet")
-                                toWidget $(luciusFile "gamepage.lucius")
-                                toWidget $(juliusFile "gamepage.julius")
+
 
 chatApp :: Int -> T.Text -> Int -> WebSocketsT Handler ()
 chatApp gid u rid  = do

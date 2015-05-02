@@ -156,7 +156,11 @@ getLobbyR = do
 <p>Welcome to the lobby.
 <p>You are logged in as #{u}
 $forall game <- gamenums
-                <p><a href="@{RoomR (fst game)}">Enter room #{fst game}</a> ( players: #{  L.intercalate ", " $ players (snd game)    } ) 
+                <p><a href="@{RoomR (fst game)}">Enter room #{fst game}</a> ( players: #{  L.intercalate ", " $ players (snd game)    } )
+                $if (started (snd game))
+                    <p>Game has already begun.
+                $else 
+                    <p>Game not yet started.
 
 <p><a href="@{AuthR LogoutR}">Logout</a>
           |]
@@ -280,6 +284,9 @@ chatApp gid u rid  = do
                   (sourceWS $$ mapM_C (\msg ->
                                            case msg of 
                                              "BEGIN"  -> do
+                                                      og <- refBoard gid
+                                                      let ug = Game { players = players og, deck = deck og, started = True}
+                                                      updateGame gid ug
                                                       wrCh msg
                                              "READY"  -> do 
                                                       cg <- refBoard gid

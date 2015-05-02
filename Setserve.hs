@@ -161,6 +161,7 @@ $forall game <- gamenums
                     <p>Game has already begun.
                 $else 
                     <p>Game not yet started.
+                <p>-----------------------------
 
 <p><a href="@{AuthR LogoutR}">Logout</a>
           |]

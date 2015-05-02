@@ -65,7 +65,8 @@ instance PersistUserCredentials User where
 
 data Game = Game {
       players :: [String],
-      deck :: Cards
+      deck :: Cards,
+      started :: Bool
 }
 
 data MyApp = MyApp {
@@ -133,12 +134,12 @@ getHomeR = do
 
 
 
-getBoard :: Int -> HandlerT MyApp IO (Cards, [String])
+getBoard :: Int -> HandlerT MyApp IO (Game)
 getBoard gid = do
   myApp <- getYesod
   gameList <- liftIO $ readMVar $ games myApp
-  let game = gameList !! gid
-  return (deck game, players game)
+  return (gameList !! gid)
+
 
 
 getLobbyR :: Handler Html
@@ -149,19 +150,13 @@ getLobbyR = do
     Nothing -> redirect $ AuthR LoginR
     Just u -> do 
               rgids <- liftIO $ readMVar (roomgids myApp)
-
-              ((deal1,rem1),pl1) <- getBoard (rgids !! 0)
-              ((deal2,rem2),pl2) <- getBoard (rgids !! 1)
-              let c1 = (length deal1) + (length rem1)
-              let c2 = (length deal2) + (length rem2)
-              let p1 = T.pack $ L.intercalate ", " pl1
-              let p2 = T.pack $ L.intercalate ", " pl2
+              games <- sequence $ map getBoard rgids
+              let gamenums = zip [1..] games
               defaultLayout $ [whamlet|
 <p>Welcome to the lobby.
 <p>You are logged in as #{u}
-<p><a href="@{RoomR 1}">Enter room 1</a> (players: #{p1}) (cards left in play: #{c1})
-<p><a href="@{RoomR 2}">Enter room 2</a> (players: #{p2}) (cards left in play: #{c2})
-
+$forall game <- gamenums
+                <p><a href="@{RoomR (fst game)}">Enter room #{fst game}</a> ( players: #{  L.intercalate ", " $ players (snd game)    } ) 
 
 <p><a href="@{AuthR LogoutR}">Logout</a>
           |]
@@ -217,14 +212,12 @@ noResetR = do
 |]
 
 
-
-
-
 createGame :: StdGen -> Game
 createGame rnd = let myDeck = splitAt 12 $ shuffle' newDeck (length newDeck) rnd
                  in Game {
                           players = [],
-                          deck = myDeck
+                          deck = myDeck,
+                          started = False
                         }
   
 
@@ -238,8 +231,8 @@ main = do
   seedP   <- liftIO $ Random.getStdGen >>= (\x -> return $ snd $ next x)
   theGames <- newMVar (gameStream seedP)
   firstGameId <- newMVar 1
-  rgids <- newMVar [1,2]
-  globalChans <- sequence $  map atomically $ replicate 5 $ newBroadcastTChan
+  rgids <- newMVar [1..10]
+  globalChans <- sequence $  map atomically $ replicate 10 $ newBroadcastTChan
 
   runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
     liftIO $ runSqlPool (runMigration migrateAll) pool
@@ -276,11 +269,11 @@ chatApp gid u rid  = do
                     dupTChan writeChan
 
 
-  ((newDeal, newRem), gplayers) <- refBoard gid                                  
-  let ug = Game { players = L.nub ((show u):gplayers) , deck = (newDeal, newRem)}
+  og <- refBoard gid                                  
+  let ug = Game { players = L.nub ((show u):(players og)) , deck = deck og, started = started og}
   updateGame gid ug 
-  ((newDeal, newRem), gplayers) <- refBoard gid                                  
-  wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " gplayers))
+  cg <- refBoard gid                                  
+  wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " (players cg)))
   
   race_
                   (forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData )
@@ -289,8 +282,8 @@ chatApp gid u rid  = do
                                              "BEGIN"  -> do
                                                       wrCh msg
                                              "READY"  -> do 
-                                                      ((firstDeal, firstRem), _) <- refBoard gid
-                                                      playLoop gid (firstDeal, firstRem) writeChan u
+                                                      cg <- refBoard gid
+                                                      playLoop gid (deck cg) writeChan u
                                                       wrCh "GOVER"
                                              _          -> wrCh "error"))
 
@@ -301,36 +294,42 @@ playLoop :: Int -> Cards -> (TChan T.Text) -> T.Text ->  WebSocketsT Handler ()
 playLoop gid (dealt, remaining) writeChan u
     | endGame    = do return ()
     | dealMore   = do
-  ((newDeal, newRem), newplayers) <- refBoard gid
-  let ug = Game { players = L.nub newplayers, deck =  (newDeal ++ (take 3 newRem), drop 3 newRem) }
+  og <- refBoard gid
+  let ug = Game { players = L.nub (players og), 
+                  deck =  (  (fst $ deck og) ++ (take 3 (snd $ deck og)), drop 3 (snd $ deck og) ),
+                  started = started og 
+                }
   updateGame gid ug
-  ((newDeal, newRem), gplayers) <- refBoard gid
-  playLoop gid (newDeal, newRem) writeChan u
+  cg <- refBoard gid
+  playLoop gid (fst $ deck cg, snd $ deck og) writeChan u
      | otherwise  = do
-    ((_, _), gplayers) <- refBoard gid
-    wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " gplayers))
+    cg <- refBoard gid
+    wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " (players cg)))
     displayBoard
     sourceWS $$ mapM_C (\input -> do 
                           let mindices = maybeRead (T.unpack input)  
                           case mindices of 
                             Nothing -> do
                               wrCh ("DEBUG: No parse" :: T.Text)
-                              ((newDeal, newRem), players) <- refBoard gid
-                              playLoop gid  (newDeal, newRem) writeChan u
+                              ug <- refBoard gid
+                              playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u
                             Just indices -> do
                                           let pickedSet = map (\i -> newDeck !! (i-1)) indices
                                           if isSet $ pickedSet 
                                           then do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",CORRECT")
-                                            ((newDeal, newRem), cplayers) <- refBoard gid
-                                            let ug = Game { players = L.nub cplayers, deck = (foldr L.delete newDeal pickedSet, newRem) }
+                                            ug <- refBoard gid
+                                            let ug = Game { players = players ug,
+                                                            deck = (foldr L.delete (fst $ deck ug) pickedSet, (snd $ deck ug)),
+                                                            started = started ug
+                                                          }
                                             updateGame gid ug
-                                            ((newDeal, newRem), players) <- refBoard gid
-                                            playLoop gid  (newDeal, newRem) writeChan u
+                                            ug <- refBoard gid
+                                            playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u
                                           else do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",WRONG")
-                                            ((newDeal, newRem), players) <- refBoard gid
-                                            playLoop gid  (newDeal, newRem) writeChan u) 
+                                            ug <- refBoard gid
+                                            playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u)
 
 
     where dealMore = (not $ anySets dealt) || (length dealt < 12)
@@ -360,12 +359,12 @@ updateGame gid game = do
 
 
 
-refBoard :: Int -> WebSocketsT Handler (Cards, [String])
+refBoard :: Int -> WebSocketsT Handler (Game)
 refBoard gid = do
   myApp <- getYesod
   gameList <- liftIO $ readMVar $ games myApp
-  let game = gameList !! gid
-  return (deck game, players game)
+  return (gameList !! gid)
+  
 
 
 

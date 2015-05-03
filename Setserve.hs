@@ -65,9 +65,9 @@ instance PersistUserCredentials User where
 
 data Game = Game {
       players :: [String],
-      deck :: Cards,
+      deck :: Cards, -- ([Card], [Card])
       started :: Bool
-}
+} deriving Show
 
 data MyApp = MyApp {
       cnpool :: ConnectionPool,
@@ -87,10 +87,10 @@ newGame tfoo =
 
 
 mkYesod "MyApp" [parseRoutes|
-/          HomeR GET
+/               HomeR GET
 /game/room/#Int RoomR GET
-/lobby     LobbyR GET
-/auth      AuthR Auth getAuth
+/lobby          LobbyR GET
+/auth           AuthR Auth getAuth
 |]
 
 instance Yesod MyApp
@@ -149,9 +149,13 @@ getLobbyR = do
   case maid of
     Nothing -> redirect $ AuthR LoginR
     Just u -> do 
+              liftIO $ putStrLn "trying to read TVars..."
               rgids <- liftIO $ readTVarIO (roomgids myApp)
+              liftIO $ putStrLn "got rgids for lobby"
               games <- sequence $ map getBoard rgids
+              liftIO $ putStrLn "got game list for lobby"
               let gamenums = zip [1..] games
+              liftIO $ putStrLn $ show $ (gamenums)
               defaultLayout $ [whamlet|
 <p>Welcome to the lobby.
 <p>You are logged in as #{u}
@@ -292,6 +296,7 @@ chatApp gid u rid  = do
                                              "READY"  -> do 
                                                       cg <- refBoard gid
                                                       playLoop gid (deck cg) writeChan u
+                                                      --increment gamecounter and set rgid !! rid to the next game
                                                       wrCh "GOVER"
                                              _          -> wrCh "error"))
 
@@ -329,13 +334,13 @@ playLoop gid (dealt, remaining) writeChan u
                                           then do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",CORRECT")
                                             ug <- refBoard gid
-                                            let ug = Game { players = players ug,
+                                            let ng = Game { players = players ug,
                                                             deck = (foldr L.delete (fst $ deck ug) pickedSet, (snd $ deck ug)),
                                                             started = started ug
                                                           }
-                                            updateGame gid ug
-                                            ug <- refBoard gid
-                                            playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u
+                                            updateGame gid ng
+                                            ng <- refBoard gid
+                                            playLoop gid (fst $ deck ng, snd $ deck ng) writeChan u
                                           else do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",WRONG")
                                             ug <- refBoard gid

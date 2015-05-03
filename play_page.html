@@ -8,18 +8,173 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 
 <script type="text/javascript" href="jquery-1.11.2">
-Image1 = new Image(150,100); //do one of these for each.
-Image1.src = "1.gif";
+/*
+card1 = new Image(150,100);
+card1.src = "images/1.gif";
 
+card2 = new Image(150,100);
+card2.src = "images/2.gif";
+
+card3 = new Image(150,100);
+card3.src = "images/3.gif";
+
+card4 = new Image(150,100);
+card4.src = "images/4.gif";
+
+card5 = new Image(150,100);
+card5.src = "images/5.gif";
+
+card6 = new Image(150,100);
+card6.src = "images/6.gif";
+
+card7 = new Image(150,100);
+card7.src = "images/7.gif";
+
+card8 = new Image(150,100);
+card8.src = "images/8.gif";
+
+card9 = new Image(150,100);
+card9.src = "images/9.gif";
+
+card10 = new Image(150,100);
+card10.src = "images/10.gif";
+
+card11 = new Image(150,100);
+card11.src = "images/11.gif";
+
+card12 = new Image(150,100);
+card12.src = "images/12.gif";
+
+card13 = new Image(150,100);
+card13.src = "images/13.gif";
+
+card14 = new Image(150,100);
+card14.src = "images/14.gif";
+
+card15 = new Image(150,100);
+card15.src = "images/15.gif";
+
+card16 = new Image(150,100);
+card16.src = "images/16.gif";
+
+card17 = new Image(150,100);
+card17.src = "images/17.gif";
+
+card18 = new Image(150,100);
+card18.src = "images/18.gif";
+
+card19 = new Image(150,100);
+card19.src = "images/19.gif";
+
+card20 = new Image(150,100);
+card20.src = "images/20.gif";
+
+card21 = new Image(150,100);
+card21.src = "images/21.gif";
+
+card22 = new Image(150,100);
+card22.src = "images/22.gif";
+
+card23 = new Image(150,100);
+card23.src = "images/23.gif";
+
+card24 = new Image(150,100);
+card24.src = "images/24.gif";
+
+card25 = new Image(150,100);
+card25.src = "images/25.gif";
+
+card26 = new Image(150,100);
+card26.src = "images/26.gif";
+
+card27 = new Image(150,100);
+card27.src = "images/27.gif";
+
+card28 = new Image(150,100);
+card28.src = "images/28.gif";
+
+card29 = new Image(150,100);
+card29.src = "images/29.gif";
+
+card30 = new Image(150,100);
+card30.src = "images/30.gif";
+
+card31 = new Image(150,100);
+card31.src = "images/31.gif";
+
+card32 = new Image(150,100);
+card32.src = "images/32.gif";
+
+card33 = new Image(150,100);
+card33.src = "images/33.gif";
+
+card34 = new Image(150,100);
+card34.src = "images/34.gif";
+
+card35 = new Image(150,100);
+card35.src = "images/35.gif";
+
+card36 = new Image(150,100);
+card36.src = "images/36.gif";
+
+card37 = new Image(150,100);
+card37.src = "images/37.gif";
+
+card38 = new Image(150,100);
+card38.src = "images/38.gif";
+
+card39 = new Image(150,100);
+card39.src = "images/39.gif";
+
+card40 = new Image(150,100);
+card40.src = "images/40.gif";
+
+card41 = new Image(150,100);
+card41.src = "images/41.gif";
+
+card42 = new Image(150,100);
+card42.src = "images/42.gif";
+
+card43 = new Image(150,100);
+card43.src = "images/43.gif";
+
+card44 = new Image(150,100);
+card44.src = "images/44.gif";
+
+card45 = new Image(150,100);
+card45.src = "images/45.gif";
+
+card46 = new Image(150,100);
+card46.src = "images/46.gif";
+
+card47 = new Image(150,100);
+card47.src = "images/47.gif";
+
+card48 = new Image(150,100);
+card48.src = "images/48.gif";
+
+card49 = new Image(150,100);
+card49.src = "images/49.gif";
+
+card50 = new Image(150,100);
+card50.src = "images/50.gif";
+*/
 /////////////////////////////////////
 //$(document).ready(function(){});
-//onclick="dealCards('21,22,23,24,25,26,27,28,29,30,31,32,33,34,35')"
+//onclick="dealCards('21,22,23,24,25,26,27,28,29,30,31,32,33,34,35	
 ////////////////////////////////////
 var toSubmit = "";
 var isHighlighted = [];
 var isDealt = false;
+var isSmall = false;
 
 function dealCards(cardString, isReset){
+	var images = document.images;
+	var it = 0;
+	while (it < images.length){
+		images[it].src = "";
+		it++;
+	}
 	isDealt = true;
 	var i = 1;
 	var j = 1;
@@ -41,21 +196,41 @@ function dealCards(cardString, isReset){
 			break;
 		}
 		else if(i == 4){	//for extra cards
-			i = 1;
-			while (i<4){
+			var x = 1;
+			while (x<4){
 				if (isReset == true){
 					document.getElementById(name).className = "card";
 				}
 				card = cardString.slice(0, comma);
-				document.getElementById("extraCard" + i).style.display = "inline";
-				document.getElementById("extraCard" + i).src = prefix + card + ".gif";
-				document.getElementById("extraCard" + i).tag = card;
+				document.getElementById("extraCard" + x).style.display = "inline";
+				document.getElementById("extraCard" + x).src = prefix + card + ".gif";
+				document.getElementById("extraCard" + x).tag = card;
 				cardString = cardString.substr(comma + 1);
-				i++;
+				x++;
+				j = 4;
 			}
 		}
 		
-		//TO DO. MAKE AN ELSE IF (i == 5) FOR EXTRA CARDS.
+		else if (i == 5){
+			isSmall = true;
+			var y = 1;
+			while (y<4){
+				if (isReset == true){
+					document.getElementById(name).className = "card";
+				}
+				card = cardString.slice(0, comma);
+				document.getElementById("extraCard2" + y).style.display = "inline";
+				document.getElementById("extraCard2" + y).src = prefix + card + ".gif";
+				document.getElementById("extraCard2" + y).tag = card;
+				cardString = cardString.substr(comma + 1);
+				y++;
+			}
+			var iter = 0;
+			while (iter < images.length){
+				images[iter].className = "smallCard";
+				iter++;
+			}
+		}
 		
 		else{			
 			card = cardString.slice(0, comma);
@@ -102,8 +277,13 @@ function highlight(slot, card){
 				console.log("loopcheck " + index + " :" + isHighlighted[index]);
 				if (isHighlighted[index] == card){
 					console.log("we're getting here");
-					var done = true;									 
-					document.getElementById(slot).className = "card";
+					var done = true;		
+					if (isSmall){
+						document.getElementById(slot).className = "smallCard";
+					}
+					else{
+						document.getElementById(slot).className = "card";
+					}
 					isHighlighted.splice(index, 1);
 				}
       }
@@ -112,7 +292,12 @@ function highlight(slot, card){
 
 	 if (done == false) {
 					if (isHighlighted.length < 3){
-						document.getElementById(slot).className = "selectedCard";
+						if (isSmall){
+							document.getElementById(slot).className = "selectedSmall";
+						}
+						else{
+							document.getElementById(slot).className = "selectedCard";
+						}
 						isHighlighted.push(card);
 					
 				  	}
@@ -155,6 +340,9 @@ function highlight(slot, card){
 								<td>
 									<img id="extraCard1" style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
+								<td>
+									<img id="extraCard21" style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
+								</td>
 							</tr>
 							<tr>
 								<td>
@@ -171,6 +359,9 @@ function highlight(slot, card){
 								</td>
 								<td>
 									<img id="extraCard2"  style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
+								</td>
+								<td>
+									<img id="extraCard22" style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
 							</tr>
 							<tr>
@@ -189,10 +380,13 @@ function highlight(slot, card){
 								<td>
 									<img id="extraCard3"  style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
 								</td>
+								<td>
+									<img id="extraCard23" style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
+								</td>
 							</tr>	
 							<tr>
-								<td colspan="5" style="height: auto;">
-									<button id="submit" type="button" disabled class="button" onclick="submitCards()"> Set! </button>
+								<td colspan="6" style="height: auto;">
+									<button id="submit" type="button"  class="button" onclick="dealCards('81,64,34,23,63,80,16,4,20,22,2,3')"> Set! </button>
 								</td>
 							</tr>
 						</table>
@@ -206,7 +400,7 @@ function highlight(slot, card){
 				<tr>
 					<td id="chat">
 						Chat goes here.
-						<button type="button" class="button" onclick="dealCards('21,22,23,24,25,26,27,28,29,30,31,32,33,34,35')"> Deal Cards </button>
+						<button type="button" class="button" onclick="dealCards('15,25,68,49,21,76,37,10,57,44,36,24,15,16,17')"> Deal Cards </button>
 					</td>
 				</tr>
 			</table>

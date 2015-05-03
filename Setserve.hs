@@ -295,6 +295,8 @@ chatApp gid u rid  = do
                                                       wrCh "GOVER"
                                              _          -> wrCh "error"))
 
+  forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData 
+
     
         
 

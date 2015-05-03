@@ -155,7 +155,7 @@ getLobbyR = do
               games <- sequence $ map getBoard rgids
               liftIO $ putStrLn "got game list for lobby"
               let gamenums = zip [1..] games
-              liftIO $ putStrLn $ show $ (gamenums)
+            --  liftIO $ putStrLn $ show $ (gamenums)
               defaultLayout $ [whamlet|
 <p>Welcome to the lobby.
 <p>You are logged in as #{u}
@@ -239,7 +239,7 @@ main :: IO ()
 main = do
   seedP   <- liftIO $ Random.getStdGen >>= (\x -> return $ snd $ next x)
   theGames <- newTVarIO (gameStream seedP)
-  firstGameId <- newTVarIO 1
+  firstGameId <- newTVarIO 11
   rgids <- newTVarIO [1..10]
   globalChans <- sequence $  map atomically $ replicate 10 $ newBroadcastTChan
 
@@ -257,8 +257,8 @@ getRoomR n = do
     case maid of
         Nothing -> redirect $ AuthR LoginR
         Just u -> do 
-                currGame <- liftIO $ readTVarIO (roomgids myApp)
-                webSockets (chatApp (currGame !! (n-1)) u n)
+                currGames <- liftIO $ readTVarIO (roomgids myApp)
+                webSockets (chatApp (currGames !! (n-1)) u n)
                 defaultLayout $ do
                                 $(whamletFile "gamepage.hamlet")
                                 toWidget $(luciusFile "gamepage.lucius")
@@ -296,7 +296,14 @@ chatApp gid u rid  = do
                                              "READY"  -> do 
                                                       cg <- refBoard gid
                                                       playLoop gid (deck cg) writeChan u
+
                                                       --increment gamecounter and set rgid !! rid to the next game
+                                                      liftIO $ newGame myApp
+                                                      newId <- liftIO $ readTVarIO (nextGameId myApp)
+                                                      currGames <- liftIO $ readTVarIO (roomgids myApp)
+                                                      let newrids = replace' (rid - 1) newId currGames
+                                                      _ <-  liftIO $ atomically $  modifyTVar (roomgids myApp) (\_ -> newrids)
+
                                                       wrCh "GOVER"
                                              _          -> wrCh "error"))
 
@@ -332,8 +339,10 @@ playLoop gid (dealt, remaining) writeChan u
                                           let pickedSet = map (\i -> newDeck !! (i-1)) indices
                                           if isSet $ pickedSet 
                                           then do
-                                            wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",RIGHT")
                                             ug <- refBoard gid
+                                            if (pickedSet !! 0) `elem` (fst $ deck ug) 
+                                            then wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",RIGHT")
+                                            else wrCh (T.pack $ "DEBUG: Double click by" ++ (show u))
                                             let ng = Game { players = players ug,
                                                             deck = (foldr L.delete (fst $ deck ug) pickedSet, (snd $ deck ug)),
                                                             started = started ug

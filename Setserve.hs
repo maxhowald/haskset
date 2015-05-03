@@ -2,43 +2,33 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, TemplateHaskell, OverloadedStrings #-}
 {-# LANGUAGE GADTs, MultiParamTypeClasses, TypeSynonymInstances #-}
 {-# LANGUAGE ViewPatterns #-}
-import qualified Data.Text as T (Text, concat, pack, unpack)
-import Data.ByteString (ByteString)
-import Database.Persist.Sqlite
-import Control.Monad.Logger (runStderrLoggingT)
 import Yesod
 import Yesod.Auth
 import Yesod.Auth.Account
-import Yesod.Auth.Message
-
-import Control.Applicative
 import qualified Yesod.Auth.Message as Msg
-import Control.Monad.Reader (void)
-
-import Yesod.Core
 import Yesod.WebSockets
-import qualified Data.Text.Lazy as TL
-import Control.Monad (forever)
-import Control.Monad.Trans.Reader
-import Control.Concurrent (threadDelay)
-import Data.Time
- -- import Conduit
-import Data.Monoid ((<>))
-import Control.Concurrent.STM
-
-import SetAssets
 
 import Text.Julius
 import Text.Lucius
-import qualified Text.Read as TR (read)
+import qualified Data.Text as T (Text, concat, pack, unpack)
+import Data.ByteString (ByteString)
+
+import Database.Persist.Sqlite
+import Control.Monad.Logger (runStderrLoggingT)
+import Control.Monad.Reader (void)
+import Control.Monad (forever)
+import Data.Monoid ((<>))
+import Conduit
+import Control.Concurrent.STM
+
 import qualified Data.List as L (delete, intercalate, nub)
 import Data.Maybe (listToMaybe)
 
-import Conduit
-import Control.Concurrent.MVar
-
-import System.Random as Random
+import System.Random (StdGen, getStdGen, next)
 import System.Random.Shuffle (shuffle')
+
+import SetAssets
+
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 User
     username T.Text
@@ -60,7 +50,7 @@ instance PersistUserCredentials User where
     userResetPwdKeyF = UserResetPasswordKey
     uniqueUsername = UniqueUsername
 
-    userCreate name email key pwd = User name pwd "" True key ""
+    userCreate name _ key pwd = User name pwd "" True key ""
 
 
 data Game = Game {
@@ -237,7 +227,7 @@ gameStream rnd = map (\gen -> createGame gen) infgens
 
 main :: IO ()
 main = do
-  seedP   <- liftIO $ Random.getStdGen >>= (\x -> return $ snd $ next x)
+  seedP   <- liftIO $ getStdGen >>= (\x -> return $ snd $ next x)
   theGames <- newTVarIO (gameStream seedP)
   firstGameId <- newTVarIO 11
   rgids <- newTVarIO [1..10]

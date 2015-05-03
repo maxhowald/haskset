@@ -1,15 +1,10 @@
 var isSmall = false;
 
 function dealCards(cardString){
-	var images = document.images;
-	var it = 0;
-	while (it < images.length){
-		images[it].src = "";
-		it++;
-	}
+
 	if (oldcardstr == cardString) {
 			return;
-			}
+	}
 	oldcardstr = cardString
 	for (ind = 1; ind < 4; ind++) {
 		document.getElementById("extraCard" + ind).style.display = "none";
@@ -27,18 +22,17 @@ function dealCards(cardString){
 		var comma = cardString.indexOf(",");
 		var name = "slot" + i + j;
 		if (comma == -1){
+		  if (i == 4 || i == 5)
+					return;
 			card = cardString.slice(0);
 			document.getElementById(name).src = prefix +  card + ".gif";
       document.getElementById(name).tag = card;
 			document.getElementById(name).className = "card"
 			break;
 		}
-		else if(x == 4){
+		else if(i == 4){
 			x = 1;
 			while (x<4){
-				if (isReset == true){
-					document.getElementById(name).className = "card";
-				}
 				if (comma == -1){
 					card = cardString;
 				}
@@ -59,16 +53,12 @@ function dealCards(cardString){
 			isSmall = true;
 			var y = 1;
 			while (y<4){
-				if (isReset == true){
-					document.getElementById(name).className = "card";
-				}
 				if (comma == -1){
 					card = cardString;
 				}
 				else{
 					card = cardString.slice(0, comma);
 				}
-				card = cardString.slice(0, comma);
 				document.getElementById("extraCard2" + y).style.display = "inline";
 				document.getElementById("extraCard2" + y).src = prefix + card + ".gif";
 				document.getElementById("extraCard2" + y).tag = card;
@@ -76,11 +66,8 @@ function dealCards(cardString){
 				comma = cardString.indexOf(",");
 				y++;
 			}
-			var iter = 0;
-			while (iter < images.length){
-				images[iter].className = "smallCard";
-				iter++;
-			}
+			
+		
 		}
 		
 		else{
@@ -100,7 +87,7 @@ function dealCards(cardString){
 		}
 	}
 }
-
+var gameStarted = false;
 var oldcardstr = "";
 var url = document.URL,
 output = document.getElementById("output"),
@@ -130,6 +117,9 @@ conn.onmessage = function(e) {
 				break;
 		case "BEGIN": //sent when someone starts the game. just acks that you're still here. 
 				console.log(msg);
+				document.getElementById("deal").onclick = submitCards
+				document.getElementById("deal").textContent = "SET!!!";
+				gameStarted = true;
 				conn.send("READY");
 				break;
 		case "GOVER": //what to to when the game ends. Probably, redirect to a scoreboard page.
@@ -137,13 +127,14 @@ conn.onmessage = function(e) {
 				break;
 	  case "PLAYR": //format PLAYR: "player1", "p2", "p3", "max"
 				console.log(msg);
+				listOfPlayers = msg.substring(6, msg.length); 
 				break;
 				
 		}  			  
 };
 
  
-
+var listOfPlayers = "";
 var isHighlighted = [];
 
 function submitCards(){
@@ -198,14 +189,23 @@ function highlight(slot, card){
 		}
 		
 		if (isHighlighted.length == 3){
-				document.getElementById("submit").disabled = false;
+				document.getElementById("deal").disabled = false;
+		}
+
+		else if (!gameStarted){
+				document.getElementById("deal").disabled = false;
 		}
 		else {
-				document.getElementById("submit").disabled = true;
+				document.getElementById("deal").disabled = true;
 		}
 }
 
 function startGame() {
-		conn.send("BEGIN");
-		document.getElementById("deal").disabled = true;
+		if (confirm('Start the game with the following players: ' + listOfPlayers + '?')) {
+    conn.send("BEGIN");
+		} else {
+				// Do nothing!
+		}
+
+		
 }

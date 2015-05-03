@@ -147,24 +147,23 @@ height: 200px;
 overflow: auto;
 }
 
-#scoreTable{
-overflow: auto;
-}
-
 .username{
 text-align: left;
 font-weight: bold;
 }
 
-.rating{
-padding-left: 10px;
-text-align: center;
-color: red;
-}
-
 .score{
 padding-left: 60px;
 text-align: right;
+}
+
+#eventDiv{
+height: 380px;
+overflow: auto;
+}
+
+#eventTable{
+overflow: auto;
 }
 
 #chat {

@@ -263,7 +263,7 @@ function dealCards(cardString, isReset){
 	}
 }
 
-function insertPlayer(username){
+function insertPlayer(username, score){
 	//if (username.length() > 10){}
 	var table = document.getElementById("scoreTable");
 	var row = table.insertRow(0);
@@ -273,8 +273,25 @@ function insertPlayer(username){
 	nameCell.className = "username";
 	scoreCell.className = "score";
 	nameCell.innerHTML = username;
-	scoreCell.innerHTML = 0;
+	scoreCell.innerHTML = score;
+	document.getElementById("scoreDiv").scrollTop = table.scrollHeight;
 }
+
+function newEvent(player, event){
+	var table = document.getElementById("eventTable");
+	var row = table.insertRow(0);
+	eventCell = row.insertCell(0);
+	if (event == "RIGHT"){
+		eventCell.innerHTML = player + " got a set!";
+		eventCell.style.color = "green";
+	}
+	else{
+		eventCell.innerHTML = player + " got a set wrong!";
+		eventCell.style.color = "red";
+	}
+	document.getElementById("eventDiv").scrollTop = table.scrollHeight;
+}
+
 
 function submitCards(){
 	var selected = isHighlighted.valueOf();
@@ -325,6 +342,7 @@ function highlight(slot, card){
 			document.getElementById("submit").disabled = true;
 		}
 }
+
 
 //still need to make function that rearranges scoreboard when message recieved.
 </script>
@@ -398,7 +416,7 @@ function highlight(slot, card){
 							</tr>	
 							<tr>
 								<td colspan="6" style="height: auto;">
-									<button id="submit" type="button"  class="button" onclick="dealCards('1,2,3,4,5,6,7,8,9,10,11,12,1,12,3')"> Set! </button>
+									<button id="submit" type="button"  class="button" onclick="newEvent('ben', 'RIGHT')"> Set! </button>
 								</td>
 							</tr>
 						</table>
@@ -414,8 +432,10 @@ function highlight(slot, card){
 
 				<tr>
 					<td id="chat">
-						Chat goes here.
-						<button type="button" class="button" onclick="insertPlayer('ben')"> Deal Cards </button>
+						<div id="eventDiv">
+							<table id="eventTable">
+							</table>
+						</div>
 					</td>
 				</tr>
 			</table>

@@ -109,7 +109,7 @@ conn.onmessage = function(e) {
 				break;
     case "EVENT": //format: EVENT: "player2", WRONG/RIGHT
 				console.log(msg);
-				newEvent(msg.substring(7, msg.length-6), msg.substring(msg.length-5));
+				newEvent(msg.substring(8, msg.length-7), msg.substring(msg.length-5));
 				break;
 		case "CHATS":
 				//not implemented

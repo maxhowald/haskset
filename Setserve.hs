@@ -71,18 +71,18 @@ data Game = Game {
 
 data MyApp = MyApp {
       cnpool :: ConnectionPool,
-      games :: MVar [Game],
-      nextGameId :: MVar Int,
+      games :: TVar [Game],
+      nextGameId :: TVar Int,
       globChans :: [TChan T.Text],
-      roomgids :: MVar  [Int]
+      roomgids :: TVar  [Int]
 }
 
-newGame :: MyApp -> IO Int
+newGame :: MyApp -> IO ()
 newGame tfoo =
-    modifyMVar (nextGameId tfoo) incrementMVar
+    atomically $  modifyTVar (nextGameId tfoo) incrementTVar
   where
-    incrementMVar :: Int -> IO (Int, Int)
-    incrementMVar value = return (value+1, value)
+    incrementTVar :: Int -> Int
+    incrementTVar value = value+1
  
 
 
@@ -137,7 +137,7 @@ getHomeR = do
 getBoard :: Int -> HandlerT MyApp IO (Game)
 getBoard gid = do
   myApp <- getYesod
-  gameList <- liftIO $ readMVar $ games myApp
+  gameList <- liftIO $ readTVarIO $ games myApp
   return (gameList !! gid)
 
 
@@ -149,7 +149,7 @@ getLobbyR = do
   case maid of
     Nothing -> redirect $ AuthR LoginR
     Just u -> do 
-              rgids <- liftIO $ readMVar (roomgids myApp)
+              rgids <- liftIO $ readTVarIO (roomgids myApp)
               games <- sequence $ map getBoard rgids
               let gamenums = zip [1..] games
               defaultLayout $ [whamlet|
@@ -234,9 +234,9 @@ gameStream rnd = map (\gen -> createGame gen) infgens
 main :: IO ()
 main = do
   seedP   <- liftIO $ Random.getStdGen >>= (\x -> return $ snd $ next x)
-  theGames <- newMVar (gameStream seedP)
-  firstGameId <- newMVar 1
-  rgids <- newMVar [1..10]
+  theGames <- newTVarIO (gameStream seedP)
+  firstGameId <- newTVarIO 1
+  rgids <- newTVarIO [1..10]
   globalChans <- sequence $  map atomically $ replicate 10 $ newBroadcastTChan
 
   runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
@@ -253,7 +253,7 @@ getRoomR n = do
     case maid of
         Nothing -> redirect $ AuthR LoginR
         Just u -> do 
-                currGame <- liftIO $ readMVar (roomgids myApp)
+                currGame <- liftIO $ readTVarIO (roomgids myApp)
                 webSockets (chatApp (currGame !! (n-1)) u n)
                 defaultLayout $ do
                                 $(whamletFile "gamepage.hamlet")
@@ -363,8 +363,7 @@ maybeRead = fmap fst . listToMaybe . filter (null . snd) . reads
 updateGame :: Int -> Game -> WebSocketsT Handler ()
 updateGame gid game = do 
   myApp <- getYesod
-  _ <-  liftIO $ modifyMVar (games myApp) (\gamess ->
-                                     return (replace' gid (game) gamess, gamess))
+  _ <-  liftIO $ atomically $  modifyTVar (games myApp) (\gamess -> replace' gid (game) gamess)
   return ()
 
 
@@ -372,7 +371,7 @@ updateGame gid game = do
 refBoard :: Int -> WebSocketsT Handler (Game)
 refBoard gid = do
   myApp <- getYesod
-  gameList <- liftIO $ readMVar $ games myApp
+  gameList <- liftIO $ readTVarIO $ games myApp
   return (gameList !! gid)
   
 

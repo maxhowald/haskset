@@ -67,7 +67,7 @@ data Game = Game {
       players :: [String],
       deck :: Cards,
       started :: Bool
-}
+} deriving Show
 
 data MyApp = MyApp {
       cnpool :: ConnectionPool,
@@ -149,9 +149,13 @@ getLobbyR = do
   case maid of
     Nothing -> redirect $ AuthR LoginR
     Just u -> do 
+              liftIO $ putStrLn "trying to read TVars..."
               rgids <- liftIO $ readTVarIO (roomgids myApp)
+              liftIO $ putStrLn "got rgids for lobby"
               games <- sequence $ map getBoard rgids
+              liftIO $ putStrLn "got game list for lobby"
               let gamenums = zip [1..] games
+              liftIO $ putStrLn $ show $ (gamenums)
               defaultLayout $ [whamlet|
 <p>Welcome to the lobby.
 <p>You are logged in as #{u}
@@ -292,6 +296,7 @@ chatApp gid u rid  = do
                                              "READY"  -> do 
                                                       cg <- refBoard gid
                                                       playLoop gid (deck cg) writeChan u
+                                                      --increment gamecounter and set rgid !! rid to the next game
                                                       wrCh "GOVER"
                                              _          -> wrCh "error"))
 

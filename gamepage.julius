@@ -122,6 +122,7 @@ conn.onmessage = function(e) {
 				break;
     case "EVENT": //format: EVENT: "player2", WRONG/RIGHT
 				console.log(msg);
+				newEvent(msg.substring(7, msg.length-6), msg.substring(msg.length-5));
 				break;
 		case "CHATS":
 				//not implemented
@@ -148,6 +149,21 @@ var isHighlighted = [];
 function submitCards(){
 	var selected = isHighlighted.valueOf();
 	conn.send("[" + selected + "]");	
+}
+
+function newEvent(player, event){
+	var table = document.getElementById("eventTable");
+	var row = table.insertRow(0);
+	eventCell = row.insertCell(0);
+	if (event == "RIGHT"){
+		eventCell.innerHTML = player + " got a set!";
+		eventCell.style.color = "green";
+	}
+	else{
+		eventCell.innerHTML = player + " got a set wrong!";
+		eventCell.style.color = "red";
+	}
+	document.getElementById("eventDiv").scrollTop = table.scrollHeight;
 }
 
 function highlight(slot, card){

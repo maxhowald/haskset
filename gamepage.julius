@@ -36,14 +36,23 @@ function dealCards(cardString){
 		else if(x == 4){
 			x = 1;
 			while (x<4){
-				card = cardString.slice(0, comma);
+				if (isReset == true){
+					document.getElementById(name).className = "card";
+				}
+				if (comma == -1){
+					card = cardString;
+				}
+				else{
+					card = cardString.slice(0, comma);
+				}
 				document.getElementById("extraCard" + x).style.display = "inline";
 				document.getElementById("extraCard" + x).src = prefix + card + ".gif";
 				document.getElementById("extraCard" + x).tag = card;
-				document.getElementById("extraCard" + x).className = "card"
 				cardString = cardString.substr(comma + 1);
+				comma = cardString.indexOf(",");
 				x++;
 			}
+			j = 4;
 		}
 		
 		else if (i == 5){
@@ -53,11 +62,18 @@ function dealCards(cardString){
 				if (isReset == true){
 					document.getElementById(name).className = "card";
 				}
+				if (comma == -1){
+					card = cardString;
+				}
+				else{
+					card = cardString.slice(0, comma);
+				}
 				card = cardString.slice(0, comma);
 				document.getElementById("extraCard2" + y).style.display = "inline";
 				document.getElementById("extraCard2" + y).src = prefix + card + ".gif";
 				document.getElementById("extraCard2" + y).tag = card;
 				cardString = cardString.substr(comma + 1);
+				comma = cardString.indexOf(",");
 				y++;
 			}
 			var iter = 0;

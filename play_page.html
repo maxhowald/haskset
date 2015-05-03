@@ -201,14 +201,21 @@ function dealCards(cardString, isReset){
 				if (isReset == true){
 					document.getElementById(name).className = "card";
 				}
-				card = cardString.slice(0, comma);
+				if (comma == -1){
+					card = cardString;
+				}
+				else{
+					card = cardString.slice(0, comma);
+				}
 				document.getElementById("extraCard" + x).style.display = "inline";
 				document.getElementById("extraCard" + x).src = prefix + card + ".gif";
 				document.getElementById("extraCard" + x).tag = card;
 				cardString = cardString.substr(comma + 1);
+				comma = cardString.indexOf(",");
 				x++;
-				j = 4;
+				
 			}
+			j = 4;
 		}
 		
 		else if (i == 5){
@@ -218,11 +225,18 @@ function dealCards(cardString, isReset){
 				if (isReset == true){
 					document.getElementById(name).className = "card";
 				}
+				if (comma == -1){
+					card = cardString;
+				}
+				else{
+					card = cardString.slice(0, comma);
+				}
 				card = cardString.slice(0, comma);
 				document.getElementById("extraCard2" + y).style.display = "inline";
 				document.getElementById("extraCard2" + y).src = prefix + card + ".gif";
 				document.getElementById("extraCard2" + y).tag = card;
 				cardString = cardString.substr(comma + 1);
+				comma = cardString.indexOf(",");
 				y++;
 			}
 			var iter = 0;
@@ -249,7 +263,7 @@ function dealCards(cardString, isReset){
 	}
 }
 
-function insertPlayer(username, rating){
+function insertPlayer(username){
 	//if (username.length() > 10){}
 	var table = document.getElementById("scoreTable");
 	var row = table.insertRow(0);
@@ -257,10 +271,8 @@ function insertPlayer(username, rating){
 	rateCell = row.insertCell(1);
 	scoreCell = row.insertCell(2);
 	nameCell.className = "username";
-	rateCell.className = "rating";
 	scoreCell.className = "score";
 	nameCell.innerHTML = username;
-	rateCell.innerHTML = "(" + rating + ")";
 	scoreCell.innerHTML = 0;
 }
 
@@ -386,21 +398,24 @@ function highlight(slot, card){
 							</tr>	
 							<tr>
 								<td colspan="6" style="height: auto;">
-									<button id="submit" type="button"  class="button" onclick="dealCards('81,64,34,23,63,80,16,4,20,22,2,3')"> Set! </button>
+									<button id="submit" type="button"  class="button" onclick="dealCards('1,2,3,4,5,6,7,8,9,10,11,12,1,12,3')"> Set! </button>
 								</td>
 							</tr>
 						</table>
 					</td>
 					<td id="scoreBox">
-						<table id="scoreTable">
-						</table>
+						<div id="scoreDiv">
+							<table id="scoreTable">
+							</table>
+						</div>
+
 					</td>
 				</tr>
 
 				<tr>
 					<td id="chat">
 						Chat goes here.
-						<button type="button" class="button" onclick="dealCards('15,25,68,49,21,76,37,10,57,44,36,24,15,16,17')"> Deal Cards </button>
+						<button type="button" class="button" onclick="insertPlayer('ben')"> Deal Cards </button>
 					</td>
 				</tr>
 			</table>

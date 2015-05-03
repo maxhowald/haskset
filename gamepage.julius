@@ -1,15 +1,10 @@
 var isSmall = false;
 
 function dealCards(cardString){
-	var images = document.images;
-	var it = 0;
-	while (it < images.length){
-		images[it].src = "";
-		it++;
-	}
+
 	if (oldcardstr == cardString) {
 			return;
-			}
+	}
 	oldcardstr = cardString
 	for (ind = 1; ind < 4; ind++) {
 		document.getElementById("extraCard" + ind).style.display = "none";
@@ -27,6 +22,8 @@ function dealCards(cardString){
 		var comma = cardString.indexOf(",");
 		var name = "slot" + i + j;
 		if (comma == -1){
+		  if (i == 4 || i == 5)
+					return;
 			card = cardString.slice(0);
 			document.getElementById(name).src = prefix +  card + ".gif";
       document.getElementById(name).tag = card;
@@ -36,9 +33,6 @@ function dealCards(cardString){
 		else if(i == 4){
 			x = 1;
 			while (x<4){
-				if (isReset == true){
-					document.getElementById(name).className = "card";
-				}
 				if (comma == -1){
 					card = cardString;
 				}
@@ -59,16 +53,12 @@ function dealCards(cardString){
 			isSmall = true;
 			var y = 1;
 			while (y<4){
-				if (isReset == true){
-					document.getElementById(name).className = "card";
-				}
 				if (comma == -1){
 					card = cardString;
 				}
 				else{
 					card = cardString.slice(0, comma);
 				}
-				card = cardString.slice(0, comma);
 				document.getElementById("extraCard2" + y).style.display = "inline";
 				document.getElementById("extraCard2" + y).src = prefix + card + ".gif";
 				document.getElementById("extraCard2" + y).tag = card;
@@ -76,11 +66,8 @@ function dealCards(cardString){
 				comma = cardString.indexOf(",");
 				y++;
 			}
-			var iter = 0;
-			while (iter < images.length){
-				images[iter].className = "smallCard";
-				iter++;
-			}
+			
+		
 		}
 		
 		else{

@@ -45,14 +45,13 @@
               <img id="extraCard23" style="display:none;" class="card" onclick="highlight(this.id, this.tag)">
           <tr>
             <td colspan="5" style="height: auto;">
-              <button id="submit" type="button" disabled class="button" onclick="submitCards()">Set!
-
+              <button type="button" id="deal" class="button" onclick="startGame()">Deal Cards
       <td id="scoreBox">
         <table id="scoreTable">
     <tr>
       <td id="chat">
         <p>Chat goes here.
-        <button type="button" id="deal" class="button" onclick="startGame()"> Deal Cards 
+ 
 
 
 

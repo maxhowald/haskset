@@ -87,7 +87,7 @@ function dealCards(cardString){
 		}
 	}
 }
-
+var gameStarted = false;
 var oldcardstr = "";
 var url = document.URL,
 output = document.getElementById("output"),
@@ -116,6 +116,9 @@ conn.onmessage = function(e) {
 				break;
 		case "BEGIN": //sent when someone starts the game. just acks that you're still here. 
 				console.log(msg);
+				document.getElementById("deal").onclick = submitCards
+				document.getElementById("deal").textContent = "SET!!!";
+				gameStarted = true;
 				conn.send("READY");
 				break;
 		case "GOVER": //what to to when the game ends. Probably, redirect to a scoreboard page.
@@ -123,13 +126,14 @@ conn.onmessage = function(e) {
 				break;
 	  case "PLAYR": //format PLAYR: "player1", "p2", "p3", "max"
 				console.log(msg);
+				listOfPlayers = msg.substring(6, msg.length); 
 				break;
 				
 		}  			  
 };
 
  
-
+var listOfPlayers = "";
 var isHighlighted = [];
 
 function submitCards(){
@@ -169,14 +173,23 @@ function highlight(slot, card){
 		}
 		
 		if (isHighlighted.length == 3){
-				document.getElementById("submit").disabled = false;
+				document.getElementById("deal").disabled = false;
+		}
+
+		else if (!gameStarted){
+				document.getElementById("deal").disabled = false;
 		}
 		else {
-				document.getElementById("submit").disabled = true;
+				document.getElementById("deal").disabled = true;
 		}
 }
 
 function startGame() {
-		conn.send("BEGIN");
-		document.getElementById("deal").disabled = true;
+		if (confirm('Start the game with the following players: ' + listOfPlayers + '?')) {
+    conn.send("BEGIN");
+		} else {
+				// Do nothing!
+		}
+
+		
 }

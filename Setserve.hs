@@ -160,10 +160,10 @@ getLobbyR = do
 <p>Welcome to the lobby.
 <p>You are logged in as #{u}
 $forall game <- gamenums
-                <p><a href="@{RoomR (fst game)}">Enter room #{fst game}</a> ( players: #{  L.intercalate ", " $ players (snd game)    } )
                 $if (started (snd game))
-                    <p>Game has already begun.
+                    <p>Game in room #{fst game} has already begun. ( players: #{  L.intercalate ", " $ players (snd game)    } )
                 $else 
+                     <p><a href="@{RoomR (fst game)}">Enter room #{fst game}</a> ( players: #{  L.intercalate ", " $ players (snd game)    } )
                     <p>Game not yet started.
                 <p>-----------------------------
 
@@ -332,7 +332,7 @@ playLoop gid (dealt, remaining) writeChan u
                                           let pickedSet = map (\i -> newDeck !! (i-1)) indices
                                           if isSet $ pickedSet 
                                           then do
-                                            wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",CORRECT")
+                                            wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",RIGHT")
                                             ug <- refBoard gid
                                             let ng = Game { players = players ug,
                                                             deck = (foldr L.delete (fst $ deck ug) pickedSet, (snd $ deck ug)),

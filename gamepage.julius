@@ -119,6 +119,7 @@ conn.onmessage = function(e) {
 				console.log(msg);
 				document.getElementById("deal").onclick = submitCards
 				document.getElementById("deal").textContent = "SET!!!";
+				document.getElementById("deal").disabled = true;
 				gameStarted = true;
 				conn.send("READY");
 				break;

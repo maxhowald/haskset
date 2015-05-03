@@ -40,6 +40,7 @@ cardnum :: Card -> Int
 cardnum c = let Just x = findIndex (\dc -> dc==c) newDeck in x+1
 
 isSet :: [Card] -> Bool 
+isSet []    = False
 isSet cards = (sameOrDiff numbers) && (sameOrDiff shades) && (sameOrDiff colors) && (sameOrDiff shapes)
     where numbers = map (\(Card num _     _     _     ) -> num)   cards
           shades  = map (\(Card _   shade _     _     ) -> shade) cards 

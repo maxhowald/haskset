@@ -48,16 +48,8 @@
               <button type="button" id="deal" class="button" onclick="startGame()">Deal Cards
       <td id="scoreBox">
         <div id="scoreDiv">
-			<table id="scoreTable">
-			</table>
-		</div>
-    <tr>
-      <td id="chat">
-        <div id="eventDiv">
-			<table id="eventTable">
-			</table>
-		</div>
- 
-
-
-
+          <table id="scoreTable">
+            <tr>
+              <td id="chat">
+                <div id="eventDiv">
+                  <table id="eventTable">

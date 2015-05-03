@@ -65,7 +65,7 @@ instance PersistUserCredentials User where
 
 data Game = Game {
       players :: [String],
-      deck :: Cards,
+      deck :: Cards, -- ([Card], [Card])
       started :: Bool
 } deriving Show
 
@@ -87,10 +87,10 @@ newGame tfoo =
 
 
 mkYesod "MyApp" [parseRoutes|
-/          HomeR GET
+/               HomeR GET
 /game/room/#Int RoomR GET
-/lobby     LobbyR GET
-/auth      AuthR Auth getAuth
+/lobby          LobbyR GET
+/auth           AuthR Auth getAuth
 |]
 
 instance Yesod MyApp
@@ -334,13 +334,13 @@ playLoop gid (dealt, remaining) writeChan u
                                           then do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",CORRECT")
                                             ug <- refBoard gid
-                                            let ug = Game { players = players ug,
+                                            let ng = Game { players = players ug,
                                                             deck = (foldr L.delete (fst $ deck ug) pickedSet, (snd $ deck ug)),
                                                             started = started ug
                                                           }
-                                            updateGame gid ug
-                                            ug <- refBoard gid
-                                            playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u
+                                            updateGame gid ng
+                                            ng <- refBoard gid
+                                            playLoop gid (fst $ deck ng, snd $ deck ng) writeChan u
                                           else do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",WRONG")
                                             ug <- refBoard gid

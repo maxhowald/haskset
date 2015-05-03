@@ -129,10 +129,15 @@ conn.onmessage = function(e) {
 	  case "PLAYR": //format PLAYR: "player1", "p2", "p3", "max"
 				console.log(msg);
 				listOfPlayers = msg.substring(6, msg.length); 
+				displayPlayers(listOfPlayers);
 				break;
 		}  			  
 };
 
+
+function displayPlayers(lst) {
+		document.getElementById("listofplayers").innerHTML = "current players: " + lst;
+}
  
 var listOfPlayers = "";
 var isHighlighted = [];

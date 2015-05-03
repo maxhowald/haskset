@@ -1,11 +1,22 @@
+var isSmall = false;
+
 function dealCards(cardString){
+	var images = document.images;
+	var it = 0;
+	while (it < images.length){
+		images[it].src = "";
+		it++;
+	}
 	if (oldcardstr == cardString) {
 			return;
 			}
 	oldcardstr = cardString
 	for (ind = 1; ind < 4; ind++) {
 		document.getElementById("extraCard" + ind).style.display = "none";
+		document.getElementById("extraCard2" + ind).style.display = "none";	//added to get rid of 5th column
 		document.getElementById("extraCard" + ind).className = "card";
+		document.getElementById("extraCard2" + ind).className = "card";		//added for same reason
+		isSmall = false;
 	}
 	isHighlighted = [];
 	var i = 1;
@@ -22,16 +33,37 @@ function dealCards(cardString){
 			document.getElementById(name).className = "card"
 			break;
 		}
-		else if(i == 4){
-			i = 1;
-			while (i<4){
+		else if(x == 4){
+			x = 1;
+			while (x<4){
 				card = cardString.slice(0, comma);
-				document.getElementById("extraCard" + i).style.display = "inline";
-				document.getElementById("extraCard" + i).src = prefix + card + ".gif";
-				document.getElementById("extraCard" + i).tag = card;
-				document.getElementById("extraCard" + i).className = "card"
+				document.getElementById("extraCard" + x).style.display = "inline";
+				document.getElementById("extraCard" + x).src = prefix + card + ".gif";
+				document.getElementById("extraCard" + x).tag = card;
+				document.getElementById("extraCard" + x).className = "card"
 				cardString = cardString.substr(comma + 1);
-				i++;
+				x++;
+			}
+		}
+		
+		else if (i == 5){
+			isSmall = true;
+			var y = 1;
+			while (y<4){
+				if (isReset == true){
+					document.getElementById(name).className = "card";
+				}
+				card = cardString.slice(0, comma);
+				document.getElementById("extraCard2" + y).style.display = "inline";
+				document.getElementById("extraCard2" + y).src = prefix + card + ".gif";
+				document.getElementById("extraCard2" + y).tag = card;
+				cardString = cardString.substr(comma + 1);
+				y++;
+			}
+			var iter = 0;
+			while (iter < images.length){
+				images[iter].className = "smallCard";
+				iter++;
 			}
 		}
 		
@@ -109,7 +141,12 @@ function highlight(slot, card){
 				for(index = 0; index < isHighlighted.length; index++){
 						if (isHighlighted[index] == card){
 								var done = true;									 
-								document.getElementById(slot).className = "card";
+								if (isSmall){
+									document.getElementById(slot).className = "smallCard";
+								}
+								else{
+									document.getElementById(slot).className = "card";
+								}
 								isHighlighted.splice(index, 1);
 						}
 				}
@@ -118,7 +155,12 @@ function highlight(slot, card){
 
 		if (done == false) {
 				if (isHighlighted.length < 3){
-						document.getElementById(slot).className = "selectedCard";
+						if (isSmall){
+							document.getElementById(slot).className = "selectedSmall";
+						}
+						else{
+							document.getElementById(slot).className = "selectedCard";
+						}
 						isHighlighted.push(card);
 				}
 		}

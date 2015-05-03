@@ -64,6 +64,36 @@ border: 2px solid red;
 	top:1px;
 }
 
+.smallCard{
+width: 130px;
+height: 100px;
+border: 2px solid black;
+box-shadow: 2px 2px 8px black;
+}
+
+.smallCard:hover{
+width: 130px;
+height: 100px;
+border: 2px solid yellow;
+cursor: pointer;
+}
+
+.smallCard:active{
+	position:relative;
+	top:1px;
+}
+
+.selectedSmall{
+width: 128px;
+height: 98px;
+border: 2px solid red;
+}
+
+.selectedSmall:active{
+	position:relative;
+	top:1px;
+}
+
 .button {
 	-moz-box-shadow:inset 0px 1px 0px 0px #a6827e;
 	-webkit-box-shadow:inset 0px 1px 0px 0px #a6827e;

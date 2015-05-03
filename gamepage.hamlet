@@ -47,10 +47,16 @@
             <td colspan="5" style="height: auto;">
               <button type="button" id="deal" class="button" onclick="startGame()">Deal Cards
       <td id="scoreBox">
-        <table id="scoreTable">
+        <div id="scoreDiv">
+			<table id="scoreTable">
+			</table>
+		</div>
     <tr>
       <td id="chat">
-        <p>Chat goes here.
+        <div id="eventDiv">
+			<table id="eventTable">
+			</table>
+		</div>
  
 
 

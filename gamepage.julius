@@ -129,7 +129,6 @@ conn.onmessage = function(e) {
 				console.log(msg);
 				listOfPlayers = msg.substring(6, msg.length); 
 				break;
-				
 		}  			  
 };
 

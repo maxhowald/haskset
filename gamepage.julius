@@ -1,4 +1,13 @@
 var isSmall = false;
+var imageArray = ["blank"];
+var iter = 1;
+
+while (iter < 82){
+	card = new Image(150,100);
+	card.src = "http://nihil.ddns.net:8000/" + iter + ".gif";
+	imageArray.push(card);
+	iter++;
+}
 
 function dealCards(cardString){
 
@@ -17,7 +26,6 @@ function dealCards(cardString){
 	var i = 1;
 	var j = 1;
 	var card;
-  var prefix = "http://nihil.ddns.net:8000/";
 	while (cardString.length != 0){
 		var comma = cardString.indexOf(",");
 		var name = "slot" + i + j;
@@ -25,7 +33,7 @@ function dealCards(cardString){
 		  if (i == 4 || i == 5)
 					return;
 			card = cardString.slice(0);
-			document.getElementById(name).src = prefix +  card + ".gif";
+			document.getElementById(name).src = imageArray[card].src;
       document.getElementById(name).tag = card;
 			document.getElementById(name).className = "card"
 			break;
@@ -40,7 +48,7 @@ function dealCards(cardString){
 					card = cardString.slice(0, comma);
 				}
 				document.getElementById("extraCard" + x).style.display = "inline";
-				document.getElementById("extraCard" + x).src = prefix + card + ".gif";
+				document.getElementById("extraCard" + x).src = imageArray[card].src;
 				document.getElementById("extraCard" + x).tag = card;
 				cardString = cardString.substr(comma + 1);
 				comma = cardString.indexOf(",");
@@ -60,7 +68,7 @@ function dealCards(cardString){
 					card = cardString.slice(0, comma);
 				}
 				document.getElementById("extraCard2" + y).style.display = "inline";
-				document.getElementById("extraCard2" + y).src = prefix + card + ".gif";
+				document.getElementById("extraCard2" + y).src = imageArray[card].src;
 				document.getElementById("extraCard2" + y).tag = card;
 				cardString = cardString.substr(comma + 1);
 				comma = cardString.indexOf(",");
@@ -72,7 +80,7 @@ function dealCards(cardString){
 		
 		else{
 			card = cardString.slice(0, comma);
-			document.getElementById(name).src =  prefix + card + ".gif";		
+			document.getElementById(name).src = imageArray[card].src;		
 			document.getElementById(name).tag = card;
 			document.getElementById(name).className = "card"
 			cardString = cardString.substr(comma + 1);

@@ -8,11 +8,16 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 
 <script type="text/javascript" href="jquery-1.11.2">
-/*
-card1 = new Image(150,100);
-card1.src = "images/1.gif";
-*/
 
+var imageArray = ["blank"];
+var iter = 1;
+
+while (iter < 82){
+	card = new Image(150,100);
+	card.src = "images/" + iter + ".gif";
+	imageArray.push(card);
+	iter++;
+}
 
 var toSubmit = "";
 var isHighlighted = [];
@@ -32,7 +37,6 @@ function dealCards(cardString, isReset){
 	var i = 1;
 	var j = 1;
 	var card;
-    var prefix = "images/"
 	if (isReset == true){
 		isHighlighted = [];
 	}
@@ -44,7 +48,7 @@ function dealCards(cardString, isReset){
 		}
 		if (comma == -1){
 			card = cardString.slice(0);
-			document.getElementById(name).src = prefix + card + ".gif";
+			document.getElementById(name).src = imageArray[card].src;
 			document.getElementById(name).tag = card;
 			break;
 		}
@@ -61,7 +65,7 @@ function dealCards(cardString, isReset){
 					card = cardString.slice(0, comma);
 				}
 				document.getElementById("extraCard" + x).style.display = "inline";
-				document.getElementById("extraCard" + x).src = prefix + card + ".gif";
+				document.getElementById("extraCard" + x).src = imageArray[card].src;
 				document.getElementById("extraCard" + x).tag = card;
 				cardString = cardString.substr(comma + 1);
 				comma = cardString.indexOf(",");
@@ -86,7 +90,7 @@ function dealCards(cardString, isReset){
 				}
 				card = cardString.slice(0, comma);
 				document.getElementById("extraCard2" + y).style.display = "inline";
-				document.getElementById("extraCard2" + y).src = prefix + card + ".gif";
+				document.getElementById("extraCard2" + y).src = imageArray[card].src;
 				document.getElementById("extraCard2" + y).tag = card;
 				cardString = cardString.substr(comma + 1);
 				comma = cardString.indexOf(",");
@@ -101,7 +105,7 @@ function dealCards(cardString, isReset){
 		
 		else{			
 			card = cardString.slice(0, comma);
-			document.getElementById(name).src =  prefix + card + ".gif";
+			document.getElementById(name).src =  imageArray[card].src;
 			document.getElementById(name).tag = card;
 			cardString = cardString.substr(comma + 1);
 		}
@@ -332,7 +336,7 @@ function highlight(slot, card){
 				<tr>
 					<td id="chat">
 						<div id="eventDiv">
-							<button type="button" onclick="refreshScore('john','RIGHT')"
+							<button type="button" onclick="dealCards('1,2,3,4,5,6,7,8,9,10,11,12')"
 							<table id="eventTable">
 							</table>
 						</div>

@@ -29,7 +29,7 @@ import System.Random.Shuffle (shuffle')
 
 import SetAssets
 
------------------Database/Yesod boilerplate----------------------------
+-----------------Database/Yesod/Auth boilerplate----------------------------
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 User
     username T.Text

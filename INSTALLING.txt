@@ -1,0 +1,26 @@
+tested with ghc 7.8.3 and cabal 1.18. Should work
+fine on newer versions, but newer versions break ghc-mod :(
+
+note:cabal install cabal-install will install cabal in ~/.cabal/bin,
+update your path accordingly if you actually want to be able to use
+it.
+
+note: the versions of ghc and cabal in the offical ubuntu package
+repos are pretty old. here's a ppa with all the new versions:
+https://launchpad.net/~hvr/+archive/ubuntu/ghc
+
+
+steps to build:
+
+clone the repo, cd into it.
+
+cabal sandbox init
+cabal install --only-dependencies    #this will take a while... add -j4 to parallelize build
+cabal configure && cabal build
+cabal run
+
+
+
+
+
+

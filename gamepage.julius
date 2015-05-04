@@ -135,10 +135,15 @@ conn.onmessage = function(e) {
 				username = username.substring(0, msg.indexOf("\""));
 				insertPlayer(username);
 				listOfPlayers = msg.substring(6, msg.length); 
+				displayPlayers(listOfPlayers);
 				break;
 		}  			  
 };
 
+
+function displayPlayers(lst) {
+		document.getElementById("listofplayers").innerHTML = "current players: " + lst;
+}
  
 var listOfPlayers = "";
 var isHighlighted = [];

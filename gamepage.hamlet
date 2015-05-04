@@ -49,7 +49,8 @@
       <td id="scoreBox">
         <div id="scoreDiv">
           <table id="scoreTable">
-            <tr>
-              <td id="chat">
-                <div id="eventDiv">
-                  <table id="eventTable">
+    <tr>
+      <td id="chat">
+         <div id="eventDiv">
+           <table id="eventTable">
+         <p id="listofplayers">	

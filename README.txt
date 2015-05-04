@@ -1,19 +1,33 @@
-setting up haskell
-tested on ghc 7.8.3 and cabal 1.18. Should work fine on newer versions, but newer versions break ghc-mod :(
-note: cabal install cabal-install will install cabal in ~/.cabal/bin, update your path accordingly if you want to use that.
+The game of Set, as a multiplayer webapp, written in haskell. 
+Built with Yesod, an excellent web framework for haskell. 
+
+Most of the code for the server related functions is in
+Setserve.hs. It contains the http request handler functions, the
+database related code, and the websockets handler that does most of
+the core gameplay stuff.
+
+SetAssets.hs exports the functions and datatypes that implement the
+core game logic of set. It should be fairly readable even if you know
+no haskell at all.
+
+the hamlet, julius, and lucius files are html, javascript, and css
+template files resepctively. See play_page.html for an example
+gameplay page.
 
 
-steps to build:
+The game uses websockets for realtime, low-latency communication,
+together with Software Transactional Memory (STM) and Channels to
+handle multiple players.
+see
+https://github.com/yesodweb/yesod/tree/master/yesod-websockets/chat.hs
+for a much simpler example of using websockets and STM together. 
 
-clone the repo, cd into it.
+also, see
+https://github.com/yesodweb/yesod/tree/master/yesod-websockets 
 
-cabal sandbox init
-cabal install --only-dependencies    #this will take a while... add -j4 to parallelize build
-cabal configure && cabal build
-cabal run
-
-
-
+for code for Five-in-a-Row online with Haskell and Server-sent Events
+(instead of websockets.) a lot of the code was repurposed
+from here.
 
 
 

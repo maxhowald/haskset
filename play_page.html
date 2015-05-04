@@ -11,160 +11,13 @@
 /*
 card1 = new Image(150,100);
 card1.src = "images/1.gif";
-
-card2 = new Image(150,100);
-card2.src = "images/2.gif";
-
-card3 = new Image(150,100);
-card3.src = "images/3.gif";
-
-card4 = new Image(150,100);
-card4.src = "images/4.gif";
-
-card5 = new Image(150,100);
-card5.src = "images/5.gif";
-
-card6 = new Image(150,100);
-card6.src = "images/6.gif";
-
-card7 = new Image(150,100);
-card7.src = "images/7.gif";
-
-card8 = new Image(150,100);
-card8.src = "images/8.gif";
-
-card9 = new Image(150,100);
-card9.src = "images/9.gif";
-
-card10 = new Image(150,100);
-card10.src = "images/10.gif";
-
-card11 = new Image(150,100);
-card11.src = "images/11.gif";
-
-card12 = new Image(150,100);
-card12.src = "images/12.gif";
-
-card13 = new Image(150,100);
-card13.src = "images/13.gif";
-
-card14 = new Image(150,100);
-card14.src = "images/14.gif";
-
-card15 = new Image(150,100);
-card15.src = "images/15.gif";
-
-card16 = new Image(150,100);
-card16.src = "images/16.gif";
-
-card17 = new Image(150,100);
-card17.src = "images/17.gif";
-
-card18 = new Image(150,100);
-card18.src = "images/18.gif";
-
-card19 = new Image(150,100);
-card19.src = "images/19.gif";
-
-card20 = new Image(150,100);
-card20.src = "images/20.gif";
-
-card21 = new Image(150,100);
-card21.src = "images/21.gif";
-
-card22 = new Image(150,100);
-card22.src = "images/22.gif";
-
-card23 = new Image(150,100);
-card23.src = "images/23.gif";
-
-card24 = new Image(150,100);
-card24.src = "images/24.gif";
-
-card25 = new Image(150,100);
-card25.src = "images/25.gif";
-
-card26 = new Image(150,100);
-card26.src = "images/26.gif";
-
-card27 = new Image(150,100);
-card27.src = "images/27.gif";
-
-card28 = new Image(150,100);
-card28.src = "images/28.gif";
-
-card29 = new Image(150,100);
-card29.src = "images/29.gif";
-
-card30 = new Image(150,100);
-card30.src = "images/30.gif";
-
-card31 = new Image(150,100);
-card31.src = "images/31.gif";
-
-card32 = new Image(150,100);
-card32.src = "images/32.gif";
-
-card33 = new Image(150,100);
-card33.src = "images/33.gif";
-
-card34 = new Image(150,100);
-card34.src = "images/34.gif";
-
-card35 = new Image(150,100);
-card35.src = "images/35.gif";
-
-card36 = new Image(150,100);
-card36.src = "images/36.gif";
-
-card37 = new Image(150,100);
-card37.src = "images/37.gif";
-
-card38 = new Image(150,100);
-card38.src = "images/38.gif";
-
-card39 = new Image(150,100);
-card39.src = "images/39.gif";
-
-card40 = new Image(150,100);
-card40.src = "images/40.gif";
-
-card41 = new Image(150,100);
-card41.src = "images/41.gif";
-
-card42 = new Image(150,100);
-card42.src = "images/42.gif";
-
-card43 = new Image(150,100);
-card43.src = "images/43.gif";
-
-card44 = new Image(150,100);
-card44.src = "images/44.gif";
-
-card45 = new Image(150,100);
-card45.src = "images/45.gif";
-
-card46 = new Image(150,100);
-card46.src = "images/46.gif";
-
-card47 = new Image(150,100);
-card47.src = "images/47.gif";
-
-card48 = new Image(150,100);
-card48.src = "images/48.gif";
-
-card49 = new Image(150,100);
-card49.src = "images/49.gif";
-
-card50 = new Image(150,100);
-card50.src = "images/50.gif";
 */
-/////////////////////////////////////
-//$(document).ready(function(){});
-//onclick="dealCards('21,22,23,24,25,26,27,28,29,30,31,32,33,34,35	
-////////////////////////////////////
+
+
 var toSubmit = "";
 var isHighlighted = [];
+var playerArray = [];
+var scoreBoard = {};
 var isDealt = false;
 var isSmall = false;
 
@@ -263,8 +116,10 @@ function dealCards(cardString, isReset){
 	}
 }
 
-function insertPlayer(username, score){
-	//if (username.length() > 10){}
+function insertPlayer(username){
+	playerArray.push(username);
+	scoreBoard[username] = 0;
+	
 	var table = document.getElementById("scoreTable");
 	var row = table.insertRow(0);
 	nameCell = row.insertCell(0);
@@ -273,8 +128,34 @@ function insertPlayer(username, score){
 	nameCell.className = "username";
 	scoreCell.className = "score";
 	nameCell.innerHTML = username;
-	scoreCell.innerHTML = score;
-	document.getElementById("scoreDiv").scrollTop = table.scrollHeight;
+	scoreCell.innerHTML = 0;
+}
+
+function refreshScore(player, event){
+	if (event == 'RIGHT'){
+		scoreBoard[player] = scoreBoard[player] + 1;
+	}
+	else{
+		scoreBoard[player] = scoreBoard[player] - 1;
+	}
+	var table = document.getElementById("scoreTable");
+	var numRows = table.rows.length;
+	while(numRows > 0){
+		document.getElementById("scoreTable").deleteRow(0);
+		numRows--;
+	}
+	var it = 0;
+	while (it < playerArray.length){
+		var row = table.insertRow(0);
+		nameCell = row.insertCell(0);
+		rateCell = row.insertCell(1);
+		scoreCell = row.insertCell(2);
+		nameCell.className = "username";
+		scoreCell.className = "score";
+		nameCell.innerHTML = playerArray[it];
+		scoreCell.innerHTML = scoreBoard[playerArray[it]];
+		it++;
+	}
 }
 
 function newEvent(player, event){
@@ -291,7 +172,6 @@ function newEvent(player, event){
 	}
 	document.getElementById("eventDiv").scrollTop = table.scrollHeight;
 }
-
 
 function submitCards(){
 	var selected = isHighlighted.valueOf();
@@ -344,7 +224,6 @@ function highlight(slot, card){
 }
 
 
-//still need to make function that rearranges scoreboard when message recieved.
 </script>
 </head>
 
@@ -416,7 +295,7 @@ function highlight(slot, card){
 							</tr>	
 							<tr>
 								<td colspan="6" style="height: auto;">
-									<button id="submit" type="button"  class="button" onclick="newEvent('ben', 'RIGHT')"> Set! </button>
+									<button id="submit" type="button"  class="button" onclick="insertPlayer('john'); insertPlayer('fred')"> Set! </button>
 								</td>
 							</tr>
 						</table>
@@ -433,6 +312,7 @@ function highlight(slot, card){
 				<tr>
 					<td id="chat">
 						<div id="eventDiv">
+							<button type="button" onclick="refreshScore('john','RIGHT')"
 							<table id="eventTable">
 							</table>
 						</div>

@@ -109,7 +109,10 @@ conn.onmessage = function(e) {
 				break;
     case "EVENT": //format: EVENT: "player2", WRONG/RIGHT
 				console.log(msg);
-				newEvent(msg.substring(8, msg.length-7), msg.substring(msg.length-5));
+				var player = msg.substring(8, msg.length-7);
+				var event = msg.substring(msg.length-5)
+				newEvent(player, event);
+				refreshScore(player, event);
 				break;
 		case "CHATS":
 				//not implemented
@@ -128,6 +131,9 @@ conn.onmessage = function(e) {
 				break;
 	  case "PLAYR": //format PLAYR: "player1", "p2", "p3", "max"
 				console.log(msg);
+				var username = msg.substring(msg.indexOf("\""));
+				username = username.substring(0, msg.indexOf("\""));
+				insertPlayer(username);
 				listOfPlayers = msg.substring(6, msg.length); 
 				break;
 		}  			  
@@ -136,6 +142,8 @@ conn.onmessage = function(e) {
  
 var listOfPlayers = "";
 var isHighlighted = [];
+var playerArray = [];
+var scoreBoard = {};
 
 function submitCards(){
 	var selected = isHighlighted.valueOf();
@@ -155,6 +163,48 @@ function newEvent(player, event){
 		eventCell.style.color = "red";
 	}
 	document.getElementById("eventDiv").scrollTop = table.scrollHeight;
+}
+
+function insertPlayer(username){
+	playerArray.push(username);
+	scoreBoard[username] = 0;
+	
+	var table = document.getElementById("scoreTable");
+	var row = table.insertRow(0);
+	nameCell = row.insertCell(0);
+	rateCell = row.insertCell(1);
+	scoreCell = row.insertCell(2);
+	nameCell.className = "username";
+	scoreCell.className = "score";
+	nameCell.innerHTML = username;
+	scoreCell.innerHTML = 0;
+}
+
+function refreshScore(player, event){
+	if (event == 'RIGHT'){
+		scoreBoard[player] = scoreBoard[player] + 1;
+	}
+	else{
+		scoreBoard[player] = scoreBoard[player] - 1;
+	}
+	var table = document.getElementById("scoreTable");
+	var numRows = table.rows.length;
+	while(numRows > 0){
+		document.getElementById("scoreTable").deleteRow(0);
+		numRows--;
+	}
+	var it = 0;
+	while (it < playerArray.length){
+		var row = table.insertRow(0);
+		nameCell = row.insertCell(0);
+		rateCell = row.insertCell(1);
+		scoreCell = row.insertCell(2);
+		nameCell.className = "username";
+		scoreCell.className = "score";
+		nameCell.innerHTML = playerArray[it];
+		scoreCell.innerHTML = scoreBoard[playerArray[it]];
+		it++;
+	}
 }
 
 function highlight(slot, card){

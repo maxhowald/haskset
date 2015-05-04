@@ -131,9 +131,7 @@ conn.onmessage = function(e) {
 				break;
 	  case "PLAYR": //format PLAYR: "player1", "p2", "p3", "max"
 				console.log(msg);
-				var username = msg.substring(msg.indexOf("\""));
-				username = username.substring(0, msg.indexOf("\""));
-				insertPlayer(username);
+				insertPlayer(msg.substring(6,msg.length));
 				listOfPlayers = msg.substring(6, msg.length); 
 				displayPlayers(listOfPlayers);
 				break;
@@ -170,19 +168,39 @@ function newEvent(player, event){
 	document.getElementById("eventDiv").scrollTop = table.scrollHeight;
 }
 
-function insertPlayer(username){
-	playerArray.push(username);
-	scoreBoard[username] = 0;
-	
+function insertPlayer(nameString){
 	var table = document.getElementById("scoreTable");
-	var row = table.insertRow(0);
-	nameCell = row.insertCell(0);
-	rateCell = row.insertCell(1);
-	scoreCell = row.insertCell(2);
-	nameCell.className = "username";
-	scoreCell.className = "score";
-	nameCell.innerHTML = username;
-	scoreCell.innerHTML = 0;
+	while (nameString.length != 0){
+		var comma = nameString.indexOf(",");
+		if (comma == -1){
+			username = nameString.slice(0);
+			playerArray.push(username);
+			scoreBoard[username] = 0;
+			var row = table.insertRow(0);
+			nameCell = row.insertCell(0);
+			rateCell = row.insertCell(1);
+			scoreCell = row.insertCell(2);
+			nameCell.className = "username";
+			scoreCell.className = "score";
+			nameCell.innerHTML = username;
+			scoreCell.innerHTML = 0;
+			break;
+		}
+		else{
+			username = nameString.slice(0, comma);
+			nameString = nameString.substr(comma + 1);
+			playerArray.push(username);
+			scoreBoard[username] = 0;
+			var row = table.insertRow(0);
+			nameCell = row.insertCell(0);
+			rateCell = row.insertCell(1);
+			scoreCell = row.insertCell(2);
+			nameCell.className = "username";
+			scoreCell.className = "score";
+			nameCell.innerHTML = username;
+			scoreCell.innerHTML = 0;
+		}
+	}
 }
 
 function refreshScore(player, event){

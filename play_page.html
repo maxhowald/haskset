@@ -116,19 +116,39 @@ function dealCards(cardString, isReset){
 	}
 }
 
-function insertPlayer(username){
-	playerArray.push(username);
-	scoreBoard[username] = 0;
-	
+function insertPlayer(nameString){
 	var table = document.getElementById("scoreTable");
-	var row = table.insertRow(0);
-	nameCell = row.insertCell(0);
-	rateCell = row.insertCell(1);
-	scoreCell = row.insertCell(2);
-	nameCell.className = "username";
-	scoreCell.className = "score";
-	nameCell.innerHTML = username;
-	scoreCell.innerHTML = 0;
+	while (nameString.length != 0){
+		var comma = nameString.indexOf(",");
+		if (comma == -1){
+			username = nameString.slice(0);
+			playerArray.push(username);
+			scoreBoard[username] = 0;
+			var row = table.insertRow(0);
+			nameCell = row.insertCell(0);
+			rateCell = row.insertCell(1);
+			scoreCell = row.insertCell(2);
+			nameCell.className = "username";
+			scoreCell.className = "score";
+			nameCell.innerHTML = username;
+			scoreCell.innerHTML = 0;
+			break;
+		}
+		else{
+			username = nameString.slice(0, comma);
+			nameString = nameString.substr(comma + 1);
+			playerArray.push(username);
+			scoreBoard[username] = 0;
+			var row = table.insertRow(0);
+			nameCell = row.insertCell(0);
+			rateCell = row.insertCell(1);
+			scoreCell = row.insertCell(2);
+			nameCell.className = "username";
+			scoreCell.className = "score";
+			nameCell.innerHTML = username;
+			scoreCell.innerHTML = 0;
+		}
+	}
 }
 
 function refreshScore(player, event){
@@ -295,7 +315,7 @@ function highlight(slot, card){
 							</tr>	
 							<tr>
 								<td colspan="6" style="height: auto;">
-									<button id="submit" type="button"  class="button" onclick="insertPlayer('john'); insertPlayer('fred')"> Set! </button>
+									<button id="submit" type="button"  class="button" onclick="insertPlayer('john,fred,bobby,jeff')"> Set! </button>
 								</td>
 							</tr>
 						</table>

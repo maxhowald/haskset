@@ -26,8 +26,8 @@ also, see
 https://github.com/yesodweb/yesod/tree/master/yesod-websockets 
 
 for code for Five-in-a-Row online with Haskell and Server-sent Events
-(instead of websockets.) a lot of the code was repurposed
-from here.
+(instead of websockets.) a lot of the code for managing global, shared
+state with Yesod was repurposed from here.
 
 
 

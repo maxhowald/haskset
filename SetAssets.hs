@@ -1,7 +1,6 @@
 module SetAssets
 ( Card
 , Cards
-, getDeck
 , newDeck
 , isSet
 , anySets
@@ -9,11 +8,10 @@ module SetAssets
 , groupsOf3
 , sets
 , cardnum
-, debugDeal
+, Game(..)
 ) where
 
 import Data.List
-import Data.Random
 
 data Color  = Red      | Purple  | Green      deriving (Eq, Ord, Show, Read, Bounded, Enum) 
 data Shape  = Squiggle | Diamond | Circle   deriving (Eq, Ord, Show, Read, Bounded, Enum) 
@@ -26,15 +24,13 @@ newDeck = [ Card number shade color shape | shade  <- [Fill .. Empty]
                                            ,shape  <- [Squiggle .. Circle]
                                            ,color  <- [Red .. Green]
                                            ,number <- [One .. Three]]
-
-debugDeal = [Card Two Hatch Purple Circle,Card Three Empty Green Squiggle,Card One Hatch Purple Circle,Card Two Fill Green Squiggle,Card Three Fill Red Squiggle,Card Two Empty Green Circle,Card Three Empty Purple Diamond,Card Two Fill Purple Squiggle,Card Two Empty Green Diamond,Card Two Fill Green Circle,Card Two Hatch Purple Diamond,Card One Empty Purple Squiggle]
-
 type Cards = ([Card], [Card])
 
-getDeck :: IO Cards
-getDeck = do
-  deck <- runRVar (shuffle newDeck) StdRandom
-  return ([], deck)
+data Game = Game {
+      players :: [String],
+      deck :: Cards, -- ([Card], [Card])
+      started :: Bool
+} deriving Show
 
 cardnum :: Card -> Int
 cardnum c = let Just x = findIndex (\dc -> dc==c) newDeck in x+1

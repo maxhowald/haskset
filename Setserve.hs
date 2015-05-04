@@ -29,6 +29,7 @@ import System.Random.Shuffle (shuffle')
 
 import SetAssets
 
+-----------------Database/Yesod boilerplate----------------------------
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistUpperCase|
 User
     username T.Text
@@ -52,13 +53,6 @@ instance PersistUserCredentials User where
 
     userCreate name _ key pwd = User name pwd "" True key ""
 
-
-data Game = Game {
-      players :: [String],
-      deck :: Cards, -- ([Card], [Card])
-      started :: Bool
-} deriving Show
-
 data MyApp = MyApp {
       cnpool :: ConnectionPool,
       games :: TVar [Game],
@@ -66,15 +60,6 @@ data MyApp = MyApp {
       globChans :: [TChan T.Text],
       roomgids :: TVar  [Int]
 }
-
-newGame :: MyApp -> IO ()
-newGame tfoo =
-    atomically $  modifyTVar (nextGameId tfoo) incrementTVar
-  where
-    incrementTVar :: Int -> Int
-    incrementTVar value = value+1
- 
-
 
 mkYesod "MyApp" [parseRoutes|
 /               HomeR GET
@@ -114,7 +99,23 @@ instance YesodAuthAccount (AccountPersistDB MyApp User) MyApp where
 
     allowPasswordReset _ = False
 
+-------------Real code begins------------------------------------------
+main :: IO ()
+main = do
+  randomSeed   <- liftIO $ getStdGen >>= (\x -> return $ snd $ next x)
+  theGames <- newTVarIO (gameStream randomSeed)
+  firstGameId <- newTVarIO 11
+  gameRoomIds <- newTVarIO [1..10]
+  broadcastChannels <- sequence $  map atomically $ replicate 10 $ newBroadcastTChan
 
+  runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
+    liftIO $ runSqlPool (runMigration migrateAll) pool
+    liftIO $ warp 3000 $ MyApp pool theGames firstGameId broadcastChannels gameRoomIds
+
+
+------------page request handler functions-----------------------------
+
+-- just redirect to the lobby or login page.  
 getHomeR :: Handler Html
 getHomeR = do
     maid <- maybeAuthId
@@ -122,16 +123,7 @@ getHomeR = do
         Nothing -> redirect $ AuthR LoginR
         Just _ -> redirect $ LobbyR
 
-
-
-getBoard :: Int -> HandlerT MyApp IO (Game)
-getBoard gid = do
-  myApp <- getYesod
-  gameList <- liftIO $ readTVarIO $ games myApp
-  return (gameList !! gid)
-
-
-
+--display all the gamerooms. TODO: auto-refresh the page every 5 seconds or something?
 getLobbyR :: Handler Html
 getLobbyR = do
   maid <- maybeAuthId
@@ -139,11 +131,8 @@ getLobbyR = do
   case maid of
     Nothing -> redirect $ AuthR LoginR
     Just u -> do 
-              liftIO $ putStrLn "trying to read TVars..."
               rgids <- liftIO $ readTVarIO (roomgids myApp)
-              liftIO $ putStrLn "got rgids for lobby"
               games <- sequence $ map getBoard rgids
-              liftIO $ putStrLn "got game list for lobby"
               let gamenums = zip [1..] games
             --  liftIO $ putStrLn $ show $ (gamenums)
               defaultLayout $ [whamlet|
@@ -160,26 +149,13 @@ $forall game <- gamenums
 <p><a href="@{AuthR LogoutR}">Logout</a>
           |]
 
-
+----------Account creation stuff.----------------------
 getNewAccountER :: HandlerT Auth (HandlerT MyApp IO) Html
 getNewAccountER = do
   tm <- getRouteToParent
   lift $ defaultLayout $ do
                    myjswid 
                    newAccountWidget tm
-
-myjswid :: WidgetT MyApp IO ()
-myjswid = do
-  addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"
-  setTitle "SET | Register"                
-  toWidget [julius| 
-                  $(document).ready(function(){
-                                     
-                                      $("#hident3").prop('value', 'user@set');
-                                      $("#hident3").hide();
-                                      $("label[for='hident3']").hide();
-                  }); 
-            |]
 
 postNewAccountOR :: HandlerT Auth (HandlerT MyApp IO) Html
 postNewAccountOR = do
@@ -209,37 +185,13 @@ noResetR = do
 <p>
    <a href="@{tm newAccountR}">_{Msg.RegisterLong}
 |]
-
-
-createGame :: StdGen -> Game
-createGame rnd = let myDeck = splitAt 12 $ shuffle' newDeck (length newDeck) rnd
-                 in Game {
-                          players = [],
-                          deck = myDeck,
-                          started = False
-                        }
   
+-- Game room page and websockets handler. The meat of the game. 
 
-gameStream :: StdGen -> [Game]
-gameStream rnd = map (\gen -> createGame gen) infgens
-    where infgens = scanl (\x f -> f x) rnd infn
-          infn = repeat (snd . next)
-
-main :: IO ()
-main = do
-  seedP   <- liftIO $ getStdGen >>= (\x -> return $ snd $ next x)
-  theGames <- newTVarIO (gameStream seedP)
-  firstGameId <- newTVarIO 11
-  rgids <- newTVarIO [1..10]
-  globalChans <- sequence $  map atomically $ replicate 10 $ newBroadcastTChan
-
-  runStderrLoggingT $ withSqlitePool "test.db3" 10 $ \pool -> do
-    liftIO $ runSqlPool (runMigration migrateAll) pool
-    liftIO $ warp 3000 $ MyApp pool theGames firstGameId globalChans rgids
-
-
-  
-
+-- NOTE: when manipulating the games (which are in shared memory) I
+-- used pretty terrible naming conventions... og = old game,
+-- ug=updated game, cg = current game, but what's "old", "updated",
+-- and "current" is not at all consistent.
 getRoomR :: Int -> Handler Html
 getRoomR n = do
     myApp <- getYesod
@@ -255,7 +207,6 @@ getRoomR n = do
                                 toWidget $(juliusFile "gamepage.julius")
 
 
-
 chatApp :: Int -> T.Text -> Int -> WebSocketsT Handler ()
 chatApp gid u rid  = do
   myApp <- getYesod
@@ -268,10 +219,10 @@ chatApp gid u rid  = do
                     dupTChan writeChan
 
 
-  og <- refBoard gid                                  
+  og <- getGame gid                                  
   let ug = Game { players = L.nub ((show u):(players og)) , deck = deck og, started = started og}
   updateGame gid ug 
-  cg <- refBoard gid                                  
+  cg <- getGame gid                                  
   wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " (players cg)))
   
   race_
@@ -279,12 +230,12 @@ chatApp gid u rid  = do
                   (sourceWS $$ mapM_C (\msg ->
                                            case msg of 
                                              "BEGIN"  -> do
-                                                      og <- refBoard gid
+                                                      og <- getGame gid
                                                       let ug = Game { players = players og, deck = deck og, started = True}
                                                       updateGame gid ug
                                                       wrCh msg
                                              "READY"  -> do 
-                                                      cg <- refBoard gid
+                                                      cg <- getGame gid
                                                       playLoop gid (deck cg) writeChan u
 
                                                       --increment gamecounter and set rgid !! rid to the next game
@@ -300,22 +251,20 @@ chatApp gid u rid  = do
   forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData 
 
     
-        
-
 playLoop :: Int -> Cards -> (TChan T.Text) -> T.Text ->  WebSocketsT Handler ()
 playLoop gid (dealt, remaining) writeChan u
     | endGame    = do return ()
     | dealMore   = do
-  og <- refBoard gid
+  og <- getGame gid
   let ug = Game { players = L.nub (players og), 
                   deck =  (  (fst $ deck og) ++ (take 3 (snd $ deck og)), drop 3 (snd $ deck og) ),
                   started = started og 
                 }
   updateGame gid ug
-  cg <- refBoard gid
+  cg <- getGame gid
   playLoop gid (fst $ deck cg, snd $ deck og) writeChan u
      | otherwise  = do
-    cg <- refBoard gid
+    cg <- getGame gid
     wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " (players cg)))
     displayBoard
     sourceWS $$ mapM_C (\input -> do 
@@ -323,13 +272,13 @@ playLoop gid (dealt, remaining) writeChan u
                           case mindices of 
                             Nothing -> do
                               wrCh ("DEBUG: No parse" :: T.Text)
-                              ug <- refBoard gid
+                              ug <- getGame gid
                               playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u
                             Just indices -> do
                                           let pickedSet = map (\i -> newDeck !! (i-1)) indices
                                           if isSet $ pickedSet 
                                           then do
-                                            ug <- refBoard gid
+                                            ug <- getGame gid
                                             if (pickedSet !! 0) `elem` (fst $ deck ug) 
                                             then wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",RIGHT")
                                             else wrCh (T.pack $ "DEBUG: Double click by" ++ (show u))
@@ -338,11 +287,11 @@ playLoop gid (dealt, remaining) writeChan u
                                                             started = started ug
                                                           }
                                             updateGame gid ng
-                                            ng <- refBoard gid
+                                            ng <- getGame gid
                                             playLoop gid (fst $ deck ng, snd $ deck ng) writeChan u
                                           else do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",WRONG")
-                                            ug <- refBoard gid
+                                            ug <- getGame gid
                                             playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u)
 
 
@@ -359,10 +308,12 @@ playLoop gid (dealt, remaining) writeChan u
 
 
           wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
-        
+
+
+-- various helper functions 
+-- TODO: refactor into separate file.        
 maybeRead :: Read a => String -> Maybe a
 maybeRead = fmap fst . listToMaybe . filter (null . snd) . reads
-
 
 updateGame :: Int -> Game -> WebSocketsT Handler ()
 updateGame gid game = do 
@@ -370,16 +321,50 @@ updateGame gid game = do
   _ <-  liftIO $ atomically $  modifyTVar (games myApp) (\gamess -> replace' gid (game) gamess)
   return ()
 
-
-
-refBoard :: Int -> WebSocketsT Handler (Game)
-refBoard gid = do
+getGame :: Int -> WebSocketsT Handler (Game)
+getGame gid = do
   myApp <- getYesod
   gameList <- liftIO $ readTVarIO $ games myApp
   return (gameList !! gid)
   
-
-
-
 replace' :: Int -> a -> [a] -> [a]
 replace' index element list = (take index list) ++ [element] ++ (drop (index+1) list)
+
+newGame :: MyApp -> IO ()
+newGame tfoo =
+    atomically $  modifyTVar (nextGameId tfoo) incrementTVar
+  where
+    incrementTVar :: Int -> Int
+    incrementTVar value = value+1
+
+createGame :: StdGen -> Game
+createGame rnd = let myDeck = splitAt 12 $ shuffle' newDeck (length newDeck) rnd
+                 in Game {
+                          players = [],
+                          deck = myDeck,
+                          started = False
+                        }
+  
+gameStream :: StdGen -> [Game]
+gameStream rnd = map (\gen -> createGame gen) infgens
+    where infgens = scanl (\x f -> f x) rnd infn
+          infn = repeat (snd . next)
+
+getBoard :: Int -> HandlerT MyApp IO (Game)
+getBoard gid = do
+  myApp <- getYesod
+  gameList <- liftIO $ readTVarIO $ games myApp
+  return (gameList !! gid)
+
+myjswid :: WidgetT MyApp IO ()
+myjswid = do
+  addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"
+  setTitle "SET | Register"                
+  toWidget [julius| 
+                  $(document).ready(function(){
+                                     
+                                      $("#hident3").prop('value', 'user@set');
+                                      $("#hident3").hide();
+                                      $("label[for='hident3']").hide();
+                  }); 
+            |]

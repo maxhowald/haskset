@@ -265,7 +265,7 @@ playLoop gid (dealt, remaining) writeChan u
   playLoop gid (fst $ deck cg, snd $ deck og) writeChan u
      | otherwise  = do
     cg <- getGame gid
-    wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " (players cg)))
+--    wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " (players cg)))
     displayBoard
     sourceWS $$ mapM_C (\input -> do 
                           let mindices = maybeRead (T.unpack input)  

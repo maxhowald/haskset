@@ -1,4 +1,5 @@
-<p>You are logged in as #{u}
+<p>You are logged in as #{u}.  <a href="@{AuthR LogoutR}">Logout</a>
+<p><a href ="@{LobbyR}">Back to the lobby </a>
 <div id="wrapper">
   <table id="main_table">
     <tr>
@@ -46,11 +47,13 @@
           <tr>
             <td colspan="5" style="height: auto;">
               <button type="button" id="deal" class="button" onclick="startGame()">Deal Cards
+              <p id="cardsleft">
       <td id="scoreBox">
         <div id="scoreDiv">
-          <table id="scoreTable">
+          <p>Scoreboard
+          <p id="listofplayers">	
     <tr>
       <td id="chat">
          <div id="eventDiv">
            <table id="eventTable">
-         <p id="listofplayers">	
+

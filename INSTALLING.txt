@@ -1,5 +1,6 @@
-tested with ghc 7.8.3 and cabal 1.18. Should work
-fine on newer versions, but newer versions break ghc-mod :(
+tested with ghc 7.8.3 and cabal 1.18. Should work fine on newer
+versions, but newer versions break ghc-mod :( (a useful emacs package
+for haskell development)
 
 note:cabal install cabal-install will install cabal in ~/.cabal/bin,
 update your path accordingly if you actually want to be able to use

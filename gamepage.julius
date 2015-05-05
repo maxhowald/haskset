@@ -14,7 +14,8 @@ function dealCards(cardString){
 	if (oldcardstr == cardString) {
 			return;
 	}
-	oldcardstr = cardString
+	oldcardstr = cardString;
+	document.getElementById("deal").disabled = true;
 	for (ind = 1; ind < 4; ind++) {
 		document.getElementById("extraCard" + ind).style.display = "none";
 		document.getElementById("extraCard2" + ind).style.display = "none";	//added to get rid of 5th column
@@ -120,7 +121,7 @@ conn.onmessage = function(e) {
 				var player = msg.substring(8, msg.length-7);
 				var event = msg.substring(msg.length-5)
 				newEvent(player, event);
-				refreshScore(player, event);
+//				refreshScore(player, event);
 				break;
 		case "CHATS":
 				//not implemented
@@ -134,12 +135,17 @@ conn.onmessage = function(e) {
 				gameStarted = true;
 				conn.send("READY");
 				break;
+		case "NLEFT":
+				console.log(msg);
+				document.getElementById("cardsleft").innerHTML = 'Cards left: ' + msg.substring(6, msg.length);
+				break;
 		case "GOVER": //what to to when the game ends. Probably, redirect to a scoreboard page.
-				window.location.replace("@{LobbyR}");
+				conn.close();
+				document.getElementById("card_table").style.opacity = 0.6;
 				break;
 	  case "PLAYR": //format PLAYR: "player1", "p2", "p3", "max"
 				console.log(msg);
-				insertPlayer(msg.substring(6,msg.length));
+//				insertPlayer(msg.substring(6,msg.length));
 				listOfPlayers = msg.substring(6, msg.length); 
 				displayPlayers(listOfPlayers);
 				break;
@@ -148,7 +154,8 @@ conn.onmessage = function(e) {
 
 
 function displayPlayers(lst) {
-		document.getElementById("listofplayers").innerHTML = "current players: " + lst;
+		document.getElementById("listofplayers").innerHTML = lst;
+		
 }
  
 var listOfPlayers = "";
@@ -163,7 +170,7 @@ function submitCards(){
 
 function newEvent(player, event){
 	var table = document.getElementById("eventTable");
-	var row = table.insertRow(0);
+	var row = table.insertRow(-1);
 	eventCell = row.insertCell(0);
 	if (event == "RIGHT"){
 		eventCell.innerHTML = player + " got a set!";
@@ -287,11 +294,13 @@ function highlight(slot, card){
 }
 
 function startGame() {
-		if (confirm('Start the game with the following players: ' + listOfPlayers + '?')) {
+		if (confirm('Start the game with the currently joined players?')) {
     conn.send("BEGIN");
 		} else {
 				// Do nothing!
 		}
 
-		
 }
+
+		
+

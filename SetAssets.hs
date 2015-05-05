@@ -20,7 +20,7 @@ data Card   = Card Number Shade Color Shape deriving (Eq, Ord, Show, Read)
 type Cards = ([Card], [Card])
 
 data Game = Game {
-      players :: [String],
+      players :: [(String, Int)],
       deck :: Cards,
       started :: Bool
 } deriving Show

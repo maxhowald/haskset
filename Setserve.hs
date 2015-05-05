@@ -21,7 +21,7 @@ import Data.Monoid ((<>))
 import Conduit
 import Control.Concurrent.STM
 
-import qualified Data.List as L (delete, intercalate, nub)
+import qualified Data.List as L (delete, intercalate, nub, findIndex, unlines)
 import Data.Maybe (listToMaybe)
 
 import System.Random (StdGen, getStdGen, next)
@@ -140,9 +140,9 @@ getLobbyR = do
 <p>You are logged in as #{u}
 $forall game <- gamenums
                 $if (started (snd game))
-                    <p>Game in room #{fst game} has already begun. ( players: #{  L.intercalate ", " $ players (snd game)    } )
+                    <p>Game in room #{fst game} has already begun. ( players: #{  show $ players (snd game)    } )
                 $else 
-                     <p><a href="@{RoomR (fst game)}">Enter room #{fst game}</a> ( players: #{  L.intercalate ", " $ players (snd game)    } )
+                     <p><a href="@{RoomR (fst game)}">Enter room #{fst game}</a> ( players: #{ show $ players (snd game)    } )
                     <p>Game not yet started.
                 <p>-----------------------------
 
@@ -220,11 +220,10 @@ chatApp gid u rid  = do
 
 
   og <- getGame gid                                  
-  let ug = Game { players = L.nub ((show u):(players og)) , deck = deck og, started = started og}
+  let ug = Game { players = L.nub (((stripChars "\"" $ show u), 0):(players og)) , deck = deck og, started = started og}
   updateGame gid ug 
   cg <- getGame gid                                  
-  wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " (players cg)))
-  
+  wrCh (T.pack $ "PLAYR: " ++ (stripChars "\"" $ myshow  (players cg)))
   race_
                   (forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData )
                   (sourceWS $$ mapM_C (\msg ->
@@ -255,6 +254,7 @@ playLoop :: Int -> Cards -> (TChan T.Text) -> T.Text ->  WebSocketsT Handler ()
 playLoop gid (dealt, remaining) writeChan u
     | endGame    = do return ()
     | dealMore   = do
+  liftIO $ putStrLn $ "Dealing more..."
   og <- getGame gid
   let ug = Game { players = L.nub (players og), 
                   deck =  (  (fst $ deck og) ++ (take 3 (snd $ deck og)), drop 3 (snd $ deck og) ),
@@ -262,10 +262,10 @@ playLoop gid (dealt, remaining) writeChan u
                 }
   updateGame gid ug
   cg <- getGame gid
-  playLoop gid (fst $ deck cg, snd $ deck og) writeChan u
+  playLoop gid (fst $ deck cg, snd $ deck cg) writeChan u
      | otherwise  = do
     cg <- getGame gid
---    wrCh (T.pack $ "PLAYR: " ++ (L.intercalate ", " (players cg)))
+    wrCh (T.pack $ "PLAYR: " ++ (stripChars "\"" $ myshow  (players cg)))
     displayBoard
     sourceWS $$ mapM_C (\input -> do 
                           let mindices = maybeRead (T.unpack input)  
@@ -280,17 +280,22 @@ playLoop gid (dealt, remaining) writeChan u
                                           then do
                                             ug <- getGame gid
                                             if (pickedSet !! 0) `elem` (fst $ deck ug) 
-                                            then wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",RIGHT")
+                                            then do
+                                              wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",RIGHT")
+                                              chPlayerScore (+1) (show u) gid
                                             else wrCh (T.pack $ "DEBUG: Double click by" ++ (show u))
-                                            let ng = Game { players = players ug,
-                                                            deck = (foldr L.delete (fst $ deck ug) pickedSet, (snd $ deck ug)),
-                                                            started = started ug
+                                            ug2 <- getGame gid
+                                            let ng = Game { players = players ug2,
+                                                            deck = (foldr L.delete (fst $ deck ug2) pickedSet, (snd $ deck ug2)),
+                                                            started = started ug2
                                                           }
+                                            liftIO $ putStrLn $ show (length $ snd $ deck ng)
                                             updateGame gid ng
                                             ng <- getGame gid
                                             playLoop gid (fst $ deck ng, snd $ deck ng) writeChan u
                                           else do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",WRONG")
+                                            chPlayerScore (subtract 1) (show u) gid
                                             ug <- getGame gid
                                             playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u)
 
@@ -301,7 +306,7 @@ playLoop gid (dealt, remaining) writeChan u
             wrCh $ (T.pack "DEBUG: Current Board")
             wrCh $ (T.pack $ "CARDS" ++ (show $ map cardnum dealt))
             wrCh $ (T.pack $ "DEBUG: " ++ (show $ map cardnum dealt))
-            wrCh $ (T.pack $ "DEBUG: " ++ (show $ length $ remaining))             
+            wrCh $ (T.pack $ "NLEFT: " ++ (show $ length $ remaining))             
             wrCh (T.pack $ "DEBUG: " ++ (show dealt))
             wrCh (T.pack "DEBUG: sets on the board")
             wrCh (T.pack $ "DEBUG: " ++  (show $ sets dealt))
@@ -309,7 +314,18 @@ playLoop gid (dealt, remaining) writeChan u
 
           wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
 
-
+chPlayerScore :: (Int -> Int) -> String -> Int -> WebSocketsT Handler ()
+chPlayerScore f player gid = do
+  game <- getGame gid
+  let Just pindex = L.findIndex (\(name, _) -> (show name) == player) (players game)
+  let new = (\(name, score) -> (name, f score)) ((players game) !! pindex)
+  let updatedPlayers = replace' pindex new (players game) 
+  let updatedGame = Game { players = updatedPlayers,
+                           deck = deck game,
+                           started = started game
+                         }
+  updateGame gid updatedGame
+  
 -- various helper functions 
 -- TODO: refactor into separate file.        
 maybeRead :: Read a => String -> Maybe a
@@ -368,3 +384,11 @@ myjswid = do
                                       $("label[for='hident3']").hide();
                   }); 
             |]
+
+
+stripChars :: String -> String -> String
+stripChars = filter . flip notElem
+
+
+myshow :: [(String, Int)] -> String
+myshow lst = concat $ map (\(name, score) -> name ++ ": " ++ (show score) ++ "<br>") lst

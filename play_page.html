@@ -122,6 +122,11 @@ function dealCards(cardString, isReset){
 
 function insertPlayer(nameString){
 	var table = document.getElementById("scoreTable");
+	var numRows = table.rows.length;
+	while(numRows > 0){
+		document.getElementById("scoreTable").deleteRow(0);
+		numRows--;
+	}
 	while (nameString.length != 0){
 		var comma = nameString.indexOf(",");
 		if (comma == -1){
@@ -336,7 +341,7 @@ function highlight(slot, card){
 				<tr>
 					<td id="chat">
 						<div id="eventDiv">
-							<button type="button" onclick="dealCards('1,2,3,4,5,6,7,8,9,10,11,12')"
+							<button type="button" onclick="insertPlayer('dingus,john,fred,bobby,jeff')"
 							<table id="eventTable">
 							</table>
 						</div>

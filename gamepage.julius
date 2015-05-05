@@ -178,6 +178,11 @@ function newEvent(player, event){
 
 function insertPlayer(nameString){
 	var table = document.getElementById("scoreTable");
+	var numRows = table.rows.length;
+	while(numRows > 0){
+		document.getElementById("scoreTable").deleteRow(0);
+		numRows--;
+	}
 	while (nameString.length != 0){
 		var comma = nameString.indexOf(",");
 		if (comma == -1){

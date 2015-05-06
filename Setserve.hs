@@ -140,9 +140,9 @@ getLobbyR = do
 <p>You are logged in as #{u}
 $forall game <- gamenums
                 $if (started (snd game))
-                    <p>Game in room #{fst game} has already begun. ( players: #{  show $ players (snd game)    } )
+                    <p>Game in room #{fst game} has already begun. ( players: #{  show $ map fst $ players (snd game)    } )
                 $else 
-                     <p><a href="@{RoomR (fst game)}">Enter room #{fst game}</a> ( players: #{ show $ players (snd game)    } )
+                     <p><a href="@{RoomR (fst game)}">Enter room #{fst game}</a> ( players: #{ show $ map fst $players (snd game)    } )
                     <p>Game not yet started.
                 <p>-----------------------------
 

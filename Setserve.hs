@@ -219,8 +219,12 @@ chatApp gid u rid  = do
                     dupTChan writeChan
 
 
-  og <- getGame gid                                  
-  let ug = Game { players = L.nub (((stripChars "\"" $ show u), 0):(players og)) , deck = deck og, started = started og}
+  og <- getGame gid    
+  let (newplayer, newscore)  = (stripChars "\"" $ show u, 0)
+  let pls = if newplayer `elem` (map fst $ players og)
+            then players og
+            else (newplayer, newscore):(players og) 
+  let ug = Game { players = pls , deck = deck og, started = started og}
   updateGame gid ug 
   cg <- getGame gid                                  
   wrCh (T.pack $ "PLAYR: " ++ (stripChars "\"" $ myshow  (players cg)))

@@ -150,6 +150,8 @@ conn.onmessage = function(e) {
 				console.log(msg);
 				conn.close();
 				document.getElementById("card_table").style.opacity = 0.6;
+				document.getElementById("scoreBox").setAttribute("style", "border:5px solid yellow;");
+				
 				break;
 	  case "PLAYR": //format PLAYR: "player1", "p2", "p3", "max"
 				console.log(msg);

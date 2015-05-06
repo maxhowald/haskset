@@ -23,6 +23,13 @@ function dealCards(cardString){
 		document.getElementById("extraCard2" + ind).className = "card";		//added for same reason
 		isSmall = false;
 	}
+	for (ii = 1; ii < 4; ii++) {
+			for (jj = 1; jj < 5; jj++) {
+					document.getElementById("slot" + ii + jj).className = "card";
+					document.getElementById("slot" + ii + jj).removeAttribute("src");
+			}
+
+	}			
 	isHighlighted = [];
 	var i = 1;
 	var j = 1;
@@ -140,6 +147,7 @@ conn.onmessage = function(e) {
 				document.getElementById("cardsleft").innerHTML = 'Cards left: ' + msg.substring(6, msg.length);
 				break;
 		case "GOVER": //what to to when the game ends. Probably, redirect to a scoreboard page.
+				console.log(msg);
 				conn.close();
 				document.getElementById("card_table").style.opacity = 0.6;
 				break;

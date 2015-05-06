@@ -226,7 +226,16 @@ chatApp gid u rid  = do
   wrCh (T.pack $ "PLAYR: " ++ (stripChars "\"" $ myshow  (players cg)))
   race_
                   (forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData )
-                  (sourceWS $$ mapM_C (\msg ->
+                  (sourceWS $$ mapM_C (handleMsg gid writeChan u myApp rid))
+
+  forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData 
+
+
+
+
+
+
+handleMsg gid writeChan u myApp rid msg = 
                                            case msg of 
                                              "BEGIN"  -> do
                                                       og <- getGame gid
@@ -235,24 +244,37 @@ chatApp gid u rid  = do
                                                       wrCh msg
                                              "READY"  -> do 
                                                       cg <- getGame gid
-                                                      playLoop gid (deck cg) writeChan u
-
+                                                      liftIO $ putStrLn "can we print ANYTHING here?"
+                                                      _ <- playLoop gid (deck cg) writeChan u rid
+                                                      liftIO $ putStrLn "do we at least return properly"
                                                       --increment gamecounter and set rgid !! rid to the next game
                                                       liftIO $ newGame myApp
                                                       newId <- liftIO $ readTVarIO (nextGameId myApp)
                                                       currGames <- liftIO $ readTVarIO (roomgids myApp)
                                                       let newrids = replace' (rid - 1) newId currGames
                                                       _ <-  liftIO $ atomically $  modifyTVar (roomgids myApp) (\_ -> newrids)
-
+                                                      liftIO $ putStrLn "writing GOVER to the channel..."
                                                       wrCh "GOVER"
-                                             _          -> wrCh "error"))
+                                             _          -> wrCh "error"
+                                           where wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
 
-  forever $ (liftIO $  atomically (readTChan readChan)) >>= sendTextData 
+
 
     
-playLoop :: Int -> Cards -> (TChan T.Text) -> T.Text ->  WebSocketsT Handler ()
-playLoop gid (dealt, remaining) writeChan u
-    | endGame    = do return ()
+playLoop :: Int -> Cards -> (TChan T.Text) -> T.Text ->  Int -> WebSocketsT Handler ()
+playLoop gid (dealt, remaining) writeChan u rid
+    | endGame    = do 
+  liftIO $ putStrLn $ "End game, returning..."
+  return ()
+  displayBoard
+  liftIO $ putStrLn $ "wtf...?"
+  wrCh "GOVER"
+  myApp <- getYesod
+  liftIO $ newGame myApp
+  newId <- liftIO $ readTVarIO (nextGameId myApp)
+  currGames <- liftIO $ readTVarIO (roomgids myApp)
+  let newrids = replace' (rid - 1) newId currGames
+  liftIO $ atomically $  modifyTVar (roomgids myApp) (\_ -> newrids)
     | dealMore   = do
   liftIO $ putStrLn $ "Dealing more..."
   og <- getGame gid
@@ -262,8 +284,9 @@ playLoop gid (dealt, remaining) writeChan u
                 }
   updateGame gid ug
   cg <- getGame gid
-  playLoop gid (fst $ deck cg, snd $ deck cg) writeChan u
+  playLoop gid (fst $ deck cg, snd $ deck cg) writeChan u rid
      | otherwise  = do
+    liftIO $ putStrLn $ "why do we jump here randomly..."
     cg <- getGame gid
     wrCh (T.pack $ "PLAYR: " ++ (stripChars "\"" $ myshow  (players cg)))
     displayBoard
@@ -273,7 +296,7 @@ playLoop gid (dealt, remaining) writeChan u
                             Nothing -> do
                               wrCh ("DEBUG: No parse" :: T.Text)
                               ug <- getGame gid
-                              playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u
+                              playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u rid
                             Just indices -> do
                                           let pickedSet = map (\i -> newDeck !! (i-1)) indices
                                           if isSet $ pickedSet 
@@ -292,15 +315,17 @@ playLoop gid (dealt, remaining) writeChan u
                                             liftIO $ putStrLn $ show (length $ snd $ deck ng)
                                             updateGame gid ng
                                             ng <- getGame gid
-                                            playLoop gid (fst $ deck ng, snd $ deck ng) writeChan u
+                                            liftIO $ putStrLn ("calling playLoop with: (" ++ (show $ fst $ deck ng) ++ (show $ snd $ deck ng) ++ ")")
+                                            playLoop gid (fst $ deck ng, snd $ deck ng) writeChan u rid
+                                            liftIO $ putStrLn ("backing out of the recursion... where do we even go from here?")
                                           else do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",WRONG")
                                             chPlayerScore (subtract 1) (show u) gid
                                             ug <- getGame gid
-                                            playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u)
+                                            playLoop gid (fst $ deck ug, snd $ deck ug) writeChan u rid) 
 
 
-    where dealMore = (not $ anySets dealt) || (length dealt < 12)
+    where dealMore = ((not $ anySets dealt) || (length dealt < 12)) && (length remaining > 0)
           endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 
           displayBoard = do 
             wrCh $ (T.pack "DEBUG: Current Board")
@@ -354,10 +379,10 @@ newGame tfoo =
     incrementTVar value = value+1
 
 createGame :: StdGen -> Game
-createGame rnd = let myDeck = splitAt 12 $ shuffle' newDeck (length newDeck) rnd
+createGame rnd = let (dealt, rem) = splitAt 12 $ shuffle' newDeck (length newDeck) rnd
                  in Game {
                           players = [],
-                          deck = myDeck,
+                          deck = (dealt, drop 66 rem),
                           started = False
                         }
   

@@ -1,9 +1,11 @@
 import Data.List
-import System.Random
+import Data.Random 
+import Data.Random.Source.Std
 import SetAssets
 
 main = do
-    let (dealt, remaining) = splitAt 12  $ getDeck (mkStdGen 81)
+    deck <- runRVar (shuffle newDeck) StdRandom
+    let (dealt, remaining) = splitAt 12 deck
     playLoop (dealt, remaining)
 
 playLoop (dealt, remaining)
@@ -27,7 +29,7 @@ playLoop (dealt, remaining)
                   putStrLn "wrong" 
                   playLoop (dealt, remaining)
 
-    where dealMore = (not $ anySets dealt) || (length dealt < 12)
+    where dealMore = ((not $ anySets dealt) || (length dealt < 12)) && (length remaining > 0)
           endGame  = ((length $ remaining) == 0) && (not $ anySets dealt) 
           displayBoard = sequence $ map print $ groupsOf3 dealt
 

@@ -146,11 +146,13 @@ conn.onmessage = function(e) {
 				console.log(msg);
 				document.getElementById("cardsleft").innerHTML = 'Cards left: ' + msg.substring(6, msg.length);
 				break;
-		case "GOVER": //what to to when the game ends. Probably, redirect to a scoreboard page.
+		case "GOVER": //what to to when the game ends.
 				console.log(msg);
 				conn.close();
 				document.getElementById("card_table").style.opacity = 0.6;
-				document.getElementById("scoreBox").setAttribute("style", "border:5px solid yellow;");
+				endPop();
+				window.location.href = "http://nihil.ddns.net:3000/lobby";
+				//document.getElementById("scoreBox").setAttribute("style", "border:5px solid yellow;");
 				
 				break;
 	  case "PLAYR": //format PLAYR: "player1", "p2", "p3", "max"
@@ -176,6 +178,29 @@ var scoreBoard = {};
 function submitCards(){
 	var selected = isHighlighted.valueOf();
 	conn.send("[" + selected + "]");	
+}
+
+function endPop(){
+	var string = "FINAL SCORE:";
+	var it = 0;
+	var winner = "";
+	var winnerMessage = "";
+	var winScore = 0;
+	while (it < playerArray.length){
+		string = string + "\n" + playerArray[it] + ": " + scoreBoard[playerArray[it]];
+		if (scoreBoard[playerArray[it]] > winScore){
+			winner = playerArray[it];
+			winnerMessage = "The winner is " + winner;
+			winScore = scoreBoard[playerArray[it]]
+		}
+		else if(scoreBoard[playerArray[it]] == winScore){
+			winner = winner + " and " + playerArray[it];
+			winnerMessage = "The winners are " + winner;
+		}
+		it++;
+	}
+	string = string + "\n \n" + winnerMessage;
+	alert(string);
 }
 
 function newEvent(player, event){

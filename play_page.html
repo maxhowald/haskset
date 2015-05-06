@@ -160,6 +160,30 @@ function insertPlayer(nameString){
 	}
 }
 
+function endPop(){
+	var string = "FINAL SCORE:";
+	var it = 0;
+	var winner = "";
+	var winnerMessage = "";
+	var winScore = 0;
+	while (it < playerArray.length){
+		string = string + "\n" + playerArray[it] + ": " + scoreBoard[playerArray[it]];
+		if (scoreBoard[playerArray[it]] > winScore){
+			winner = playerArray[it];
+			winnerMessage = "The winner is " + winner;
+			winScore = scoreBoard[playerArray[it]]
+		}
+		else if(scoreBoard[playerArray[it]] == winScore){
+			winner = winner + " and " + playerArray[it];
+			winnerMessage = "The winners are " + winner;
+		}
+		it++;
+	}
+	string = string + "\n \n" + winnerMessage;
+	alert(string);
+	window.location.href= "http://nihil.ddns.net:3000/lobby";
+}
+
 function refreshScore(player, event){
 	if (event == 'RIGHT'){
 		scoreBoard[player] = scoreBoard[player] + 1;
@@ -341,7 +365,7 @@ function highlight(slot, card){
 				<tr>
 					<td id="chat">
 						<div id="eventDiv">
-							<button type="button" onclick="insertPlayer('dingus,john,fred,bobby,jeff')"
+							<button type="button" onclick="endPop()"
 							<table id="eventTable">
 							</table>
 						</div>

@@ -257,9 +257,8 @@ handleMsg gid writeChan u myApp rid msg =
                                                       currGames <- liftIO $ readTVarIO (roomgids myApp)
                                                       let newrids = replace' (rid - 1) newId currGames
                                                       _ <-  liftIO $ atomically $  modifyTVar (roomgids myApp) (\_ -> newrids)
-                                                      liftIO $ putStrLn "writing GOVER to the channel..."
-                                                      wrCh "GOVER"
-                                             _          -> wrCh "error"
+                                                      return () 
+                                             _          -> wrCh "DEBUG: error"
                                            where wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
 
 
@@ -269,16 +268,23 @@ playLoop :: Int -> Cards -> (TChan T.Text) -> T.Text ->  Int -> WebSocketsT Hand
 playLoop gid (dealt, remaining) writeChan u rid
     | endGame    = do 
   liftIO $ putStrLn $ "End game, returning..."
-  return ()
   displayBoard
   liftIO $ putStrLn $ "wtf...?"
-  wrCh "GOVER"
+  fg <- getGame gid
+  let pls = players fg 
+  let maxScore = maximum $ map snd pls
+  let winners = map fst $ filter (\(_, score) -> score == maxScore) pls
+  let winnerstr = if (length winners == 1)
+                  then (winners !! 0) ++ " has won the game!"
+                  else (L.intercalate ", " winners) ++ " have tied for the win!"
+  wrCh (T.pack  $ "GOVER: " ++ winnerstr)
   myApp <- getYesod
   liftIO $ newGame myApp
   newId <- liftIO $ readTVarIO (nextGameId myApp)
   currGames <- liftIO $ readTVarIO (roomgids myApp)
   let newrids = replace' (rid - 1) newId currGames
   liftIO $ atomically $  modifyTVar (roomgids myApp) (\_ -> newrids)
+
     | dealMore   = do
   liftIO $ putStrLn $ "Dealing more..."
   og <- getGame gid

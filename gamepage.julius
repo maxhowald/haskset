@@ -148,8 +148,13 @@ conn.onmessage = function(e) {
 				break;
 		case "GOVER": //what to to when the game ends. Probably, redirect to a scoreboard page.
 				console.log(msg);
-				conn.close();
+				winnerstr = msg.substring(6, msg.length);				
 				document.getElementById("card_table").style.opacity = 0.6;
+				alert(winnerstr + " Click Ok to go back to the lobby.");
+				conn.close();
+				window.location.href = "http://nihil.ddns.net:3000/lobby";
+
+				
 				document.getElementById("scoreBox").setAttribute("style", "border:5px solid yellow;");
 				
 				break;

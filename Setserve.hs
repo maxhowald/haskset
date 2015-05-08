@@ -344,7 +344,7 @@ playLoop gid (dealt, remaining) writeChan u rid
             wrCh $ (T.pack $ "NLEFT: " ++ (show $ length $ remaining))             
             wrCh (T.pack $ "DEBUG: " ++ (show dealt))
             wrCh (T.pack "DEBUG: sets on the board")
-            wrCh (T.pack $ "DEBUG: " ++  (show $ sets dealt))
+            wrCh (T.pack $ "DEBUG: No cheating allowed!")
 
 
           wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
@@ -392,7 +392,7 @@ createGame :: StdGen -> Game
 createGame rnd = let (dealt, rem) = splitAt 12 $ shuffle' newDeck (length newDeck) rnd
                  in Game {
                           players = [],
-                          deck = (dealt, drop 66 rem),
+                          deck = (dealt, rem),
                           started = False
                         }
   

@@ -219,8 +219,12 @@ chatApp gid u rid  = do
                     dupTChan writeChan
 
 
-  og <- getGame gid                                  
-  let ug = Game { players = L.nub (((stripChars "\"" $ show u), 0):(players og)) , deck = deck og, started = started og}
+  og <- getGame gid    
+  let (newplayer, newscore)  = (stripChars "\"" $ show u, 0)
+  let pls = if newplayer `elem` (map fst $ players og)
+            then players og
+            else (newplayer, newscore):(players og) 
+  let ug = Game { players = pls , deck = deck og, started = started og}
   updateGame gid ug 
   cg <- getGame gid                                  
   wrCh (T.pack $ "PLAYR: " ++ (stripChars "\"" $ myshow  (players cg)))
@@ -253,9 +257,8 @@ handleMsg gid writeChan u myApp rid msg =
                                                       currGames <- liftIO $ readTVarIO (roomgids myApp)
                                                       let newrids = replace' (rid - 1) newId currGames
                                                       _ <-  liftIO $ atomically $  modifyTVar (roomgids myApp) (\_ -> newrids)
-                                                      liftIO $ putStrLn "writing GOVER to the channel..."
-                                                      wrCh "GOVER"
-                                             _          -> wrCh "error"
+                                                      return () 
+                                             _          -> wrCh "DEBUG: error"
                                            where wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
 
 
@@ -265,16 +268,23 @@ playLoop :: Int -> Cards -> (TChan T.Text) -> T.Text ->  Int -> WebSocketsT Hand
 playLoop gid (dealt, remaining) writeChan u rid
     | endGame    = do 
   liftIO $ putStrLn $ "End game, returning..."
-  return ()
   displayBoard
   liftIO $ putStrLn $ "wtf...?"
-  wrCh "GOVER"
+  fg <- getGame gid
+  let pls = players fg 
+  let maxScore = maximum $ map snd pls
+  let winners = map fst $ filter (\(_, score) -> score == maxScore) pls
+  let winnerstr = if (length winners == 1)
+                  then (winners !! 0) ++ " has won the game!"
+                  else (L.intercalate ", " winners) ++ " have tied for the win!"
+  wrCh (T.pack  $ "GOVER: " ++ winnerstr)
   myApp <- getYesod
   liftIO $ newGame myApp
   newId <- liftIO $ readTVarIO (nextGameId myApp)
   currGames <- liftIO $ readTVarIO (roomgids myApp)
   let newrids = replace' (rid - 1) newId currGames
   liftIO $ atomically $  modifyTVar (roomgids myApp) (\_ -> newrids)
+
     | dealMore   = do
   liftIO $ putStrLn $ "Dealing more..."
   og <- getGame gid
@@ -334,7 +344,7 @@ playLoop gid (dealt, remaining) writeChan u rid
             wrCh $ (T.pack $ "NLEFT: " ++ (show $ length $ remaining))             
             wrCh (T.pack $ "DEBUG: " ++ (show dealt))
             wrCh (T.pack "DEBUG: sets on the board")
-            wrCh (T.pack $ "DEBUG: " ++  (show $ sets dealt))
+            wrCh (T.pack $ "DEBUG: No cheating allowed!")
 
 
           wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt
@@ -382,7 +392,7 @@ createGame :: StdGen -> Game
 createGame rnd = let (dealt, rem) = splitAt 12 $ shuffle' newDeck (length newDeck) rnd
                  in Game {
                           players = [],
-                          deck = (dealt, drop 66 rem),
+                          deck = (dealt, rem),
                           started = False
                         }
   

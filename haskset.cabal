@@ -5,7 +5,7 @@ name:                haskset
 version:             0.1.0.0
 synopsis:            the game of set in haskell.
 -- description:         
--- license:             
+license:             BSD3
 license-file:        LICENSE
 author:              Max Howald
 maintainer:          maxhowald@gmail.com

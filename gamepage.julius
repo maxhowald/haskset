@@ -2,9 +2,14 @@ var isSmall = false;
 var imageArray = ["blank"];
 var iter = 1;
 
+//path where card images are located: can be hosted on a separate
+//domain from the root site. For instance, run 
+//python -mSimpleHTTPServer 
+//in the images/ dir.
+var pathToCards ="http://nihil.ddns.net:8000/"
 while (iter < 82){
 	card = new Image(150,100);
-	card.src = "http://nihil.ddns.net:8000/" + iter + ".gif";
+	card.src = pathToCards + iter + ".gif";
 	imageArray.push(card);
 	iter++;
 }

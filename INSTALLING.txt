@@ -1,13 +1,13 @@
 tested with ghc 7.8.3 and cabal 1.18. Should work fine on newer
-versions, but newer versions break ghc-mod :( (a useful emacs package
-for haskell development)
+versions, but some dependencies require new-ish versions of cabal.
 
-note:cabal install cabal-install will install cabal in ~/.cabal/bin,
-update your path accordingly if you actually want to be able to use
-it.
+note: You can install an older version of cabal from your distro
+package manager, and then use cabal install cabal-install to install a
+later version. But this will install in ~/.cabal/bin, so update your path
+accordingly to make sure you're actually using the new version.
 
 note: the versions of ghc and cabal in the offical ubuntu package
-repos are pretty old. here's a ppa with all the new versions:
+repos are pretty old. here's a ppa with the latest versions:
 https://launchpad.net/~hvr/+archive/ubuntu/ghc
 
 

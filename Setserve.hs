@@ -248,9 +248,7 @@ handleMsg gid writeChan u myApp rid msg =
                                                       wrCh msg
                                              "READY"  -> do 
                                                       cg <- getGame gid
-                                                      liftIO $ putStrLn "can we print ANYTHING here?"
                                                       _ <- playLoop gid (deck cg) writeChan u rid
-                                                      liftIO $ putStrLn "do we at least return properly"
                                                       --increment gamecounter and set rgid !! rid to the next game
                                                       liftIO $ newGame myApp
                                                       newId <- liftIO $ readTVarIO (nextGameId myApp)
@@ -267,9 +265,7 @@ handleMsg gid writeChan u myApp rid msg =
 playLoop :: Int -> Cards -> (TChan T.Text) -> T.Text ->  Int -> WebSocketsT Handler ()
 playLoop gid (dealt, remaining) writeChan u rid
     | endGame    = do 
-  liftIO $ putStrLn $ "End game, returning..."
   displayBoard
-  liftIO $ putStrLn $ "wtf...?"
   fg <- getGame gid
   let pls = players fg 
   let maxScore = maximum $ map snd pls
@@ -286,7 +282,6 @@ playLoop gid (dealt, remaining) writeChan u rid
   liftIO $ atomically $  modifyTVar (roomgids myApp) (\_ -> newrids)
 
     | dealMore   = do
-  liftIO $ putStrLn $ "Dealing more..."
   og <- getGame gid
   let ug = Game { players = L.nub (players og), 
                   deck =  (  (fst $ deck og) ++ (take 3 (snd $ deck og)), drop 3 (snd $ deck og) ),
@@ -295,8 +290,8 @@ playLoop gid (dealt, remaining) writeChan u rid
   updateGame gid ug
   cg <- getGame gid
   playLoop gid (fst $ deck cg, snd $ deck cg) writeChan u rid
+
      | otherwise  = do
-    liftIO $ putStrLn $ "why do we jump here randomly..."
     cg <- getGame gid
     wrCh (T.pack $ "PLAYR: " ++ (stripChars "\"" $ myshow  (players cg)))
     displayBoard
@@ -325,9 +320,7 @@ playLoop gid (dealt, remaining) writeChan u rid
                                             liftIO $ putStrLn $ show (length $ snd $ deck ng)
                                             updateGame gid ng
                                             ng <- getGame gid
-                                            liftIO $ putStrLn ("calling playLoop with: (" ++ (show $ fst $ deck ng) ++ (show $ snd $ deck ng) ++ ")")
                                             playLoop gid (fst $ deck ng, snd $ deck ng) writeChan u rid
-                                            liftIO $ putStrLn ("backing out of the recursion... where do we even go from here?")
                                           else do
                                             wrCh (T.pack $ "EVENT: " ++ (show u) ++ ",WRONG")
                                             chPlayerScore (subtract 1) (show u) gid
@@ -344,7 +337,7 @@ playLoop gid (dealt, remaining) writeChan u rid
             wrCh $ (T.pack $ "NLEFT: " ++ (show $ length $ remaining))             
             wrCh (T.pack $ "DEBUG: " ++ (show dealt))
             wrCh (T.pack "DEBUG: sets on the board")
-            wrCh (T.pack $ "DEBUG: No cheating allowed!")
+            wrCh (T.pack $ "DEBUG: (not displaying sets)")
 
 
           wrCh txt = liftIO $ atomically $ writeTChan writeChan $ txt

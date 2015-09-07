@@ -1,5 +1,15 @@
-The game of Set, as a multiplayer webapp, written in haskell. 
-Built with Yesod, an excellent web framework for haskell. 
+#The game of Set, as a multiplayer webapp, written in Haskell. 
+Built with Yesod, an excellent web framework for haskell.
+ 
+For ECE361 - Software Engineering and Large System Design, Spring 2015
+
+##Example Game
+![Game Board with Cards](/example_gameplay.png?raw=true)
+
+##Running This Code
+See INSTALLING.txt for instructions on building and running. 
+
+## Notes
 
 Most of the code for the server related functions is in
 Setserve.hs. It contains the http request handler functions, the
@@ -19,10 +29,9 @@ The game uses websockets for realtime, low-latency communication,
 together with Software Transactional Memory (STM) and Channels to
 handle multiple players.
 
-See INSTALLING.txt for instructions on building and running. 
 
-Helpful link:
-https://github.com/nbartlomiej/tfoo
+
+Helpful link: [https://github.com/nbartlomiej/tfoo](https://github.com/nbartlomiej/tfoo)
 
 An implementation of Five in a Row online with Haskell and Server-sent
 Events (instead of websockets.) A lot of the code for managing global,
@@ -30,5 +39,3 @@ shared state with Yesod was repurposed from here.
 
 Note: This code is released with a BSD license, but the game of Set is
 copyright someone else, so beware. 
-
-
